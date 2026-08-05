@@ -9,20 +9,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root { --gold-gradient: linear-gradient(135deg, #F3E7C4 0%, #D4AF37 50%, #AA771C 100%); }
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; overflow-x: hidden; }
     .admin-card { background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border-top: 4px solid #D4AF37; }
     .gold-btn { background: var(--gold-gradient); color: #022C22; font-weight: 800; transition: all 0.3s ease; }
     .gold-btn:hover { box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); transform: translateY(-1px); }
     .admin-input { background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; }
     .admin-input:focus { border-color: #D4AF37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); outline: none; }
     .table-header { background-color: #064E3B; color: #ffffff; }
+    
+    /* Custom Swapper Background - Tema Hijau Gelap Mewah */
+    .swal2-backdrop-custom { background: rgba(2, 44, 34, 0.85) !important; backdrop-filter: blur(8px); }
   </style>
 </head>
 <body class="min-height-screen pb-16">
 
   <!-- KONFIGURASI API -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz-zJD4xJeuvGNxzMz5FdDvMyb09yRyGAHN6SPvFvnoo3TMXn6i1d_u9AJPc_9Rm7Gt/exec"; // <--- GANTI DENGAN URL DEPLOY GAS ANDA
+    const API_URL = "https://script.google.com/macros/s/AKfycbzPX5giW0KxBP1WmtxRgsWR7sBmeEgT8RNKvOK08U8qogZzDePKpZuty_VcRxXBHEjy/exec"; 
     
     async function apiGET(action, params = {}) {
       let url = `${API_URL}?action=${action}`;
@@ -39,116 +42,168 @@
     }
   </script>
 
-  <header class="bg-[#022C22] text-white shadow-xl sticky top-0 z-40 border-b border-amber-500/30">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-white p-1 flex items-center justify-center shadow-md"><img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" alt="Logo" class="w-full h-full object-contain"></div>
-        <div><h1 class="font-extrabold text-lg tracking-wider">PANEL ADMINISTRATOR</h1><p class="text-xs text-amber-300 font-medium">Bank Sampah Gerlingsih Stupa</p></div>
-      </div>
-      <div class="flex items-center gap-2 flex-wrap justify-center">
-        <!-- Kembali ke beranda Vercel -->
-        <a href="index.html" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all border border-white/20">← Kembali ke Beranda</a>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 mt-8 space-y-6">
-    <div class="flex flex-wrap gap-2 justify-center bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
-      <button onclick="switchAdminMenu('rekap')" id="tab-rekap" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all gold-btn shadow-md">1. Rekapitulasi</button>
-      <button onclick="switchAdminMenu('kelas')" id="tab-kelas" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">2. Rekap Kelas</button>
-      <button onclick="switchAdminMenu('margin')" id="tab-margin" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">3. Rekap Margin / Tahun</button>
-      <button onclick="switchAdminMenu('peringkat')" id="tab-peringkat" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">4. Peringkat</button>
-      <button onclick="switchAdminMenu('mutasi')" id="tab-mutasi" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">5. Kwitansi Mutasi</button>
-      <button onclick="switchAdminMenu('hapus')" id="tab-hapus" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">⚠️ Hapus Nasabah</button>
-    </div>
-
-    <!-- REKAP -->
-    <div id="content-rekap" class="admin-card p-6 rounded-3xl space-y-6">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
-        <div><h2 class="text-xl font-black uppercase text-slate-800">Rekapitulasi Data Seluruh Nasabah</h2><p class="text-xs text-slate-500">Filter berdasarkan Bulan dan Tahun.</p></div>
+  <!-- APP WRAPPER: UNTUK EFEK BLUR DAN TRANSISI MUNCUL -->
+  <!-- Script akan menghapus class blur dan opacity setelah login sukses -->
+  <div id="app-wrapper" class="filter blur-xl opacity-0 pointer-events-none transition-all duration-1000 ease-out transform scale-95">
+    
+    <header class="bg-[#022C22] text-white shadow-xl sticky top-0 z-40 border-b border-amber-500/30">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-3">
-          <select id="filterBulan" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"><option value="ALL">Semua Bulan</option><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
-          <select id="filterTahun" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"></select>
+          <div class="w-10 h-10 rounded-full bg-white p-1 flex items-center justify-center shadow-md"><img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" alt="Logo" class="w-full h-full object-contain"></div>
+          <div><h1 class="font-extrabold text-lg tracking-wider">PANEL ADMINISTRATOR</h1><p class="text-xs text-amber-300 font-medium">Bank Sampah Gerlingsih Stupa</p></div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap justify-center">
+          <a href="index.html" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all border border-white/20">← Kembali ke Beranda</a>
         </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900">Kelas</th><th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th><th class="p-3.5 border border-emerald-900 text-right">Tabungan (Rp)</th><th class="p-3.5 border border-emerald-900 text-right">Penjualan (Rp)</th><th class="p-3.5 border border-emerald-900 text-right">Margin (Rp)</th></tr></thead>
-          <tbody id="tbodyRekap" class="divide-y divide-slate-200"></tbody>
-          <tfoot><tr class="bg-amber-400 font-extrabold text-slate-900"><td class="p-3.5 border border-amber-500 uppercase">Total</td><td id="totBeratRekap" class="p-3.5 border border-amber-500 text-right">0,0 Kg</td><td id="totTabunganRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td><td id="totPenjualanRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td><td id="totMarginRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td></tr></tfoot>
-        </table>
-      </div>
-    </div>
+    </header>
 
-    <!-- KELAS -->
-    <div id="content-kelas" class="admin-card p-6 rounded-3xl space-y-6 hidden">
-      <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Tabungan per Tingkat Kelas/Kategori</h2></div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900 w-16 text-center">No</th><th class="p-3.5 border border-emerald-900">Kelas / Kategori</th><th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th><th class="p-3.5 border border-emerald-900 text-right">Saldo (Rp)</th><th class="p-3.5 border border-emerald-900 text-center">Peringkat</th></tr></thead>
-          <tbody id="tbodyRekapKelas" class="divide-y divide-slate-200"></tbody>
-        </table>
+    <main class="max-w-7xl mx-auto px-4 mt-8 space-y-6">
+      <div class="flex flex-wrap gap-2 justify-center bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+        <button onclick="switchAdminMenu('rekap')" id="tab-rekap" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all gold-btn shadow-md">1. Rekapitulasi</button>
+        <button onclick="switchAdminMenu('kelas')" id="tab-kelas" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">2. Rekap Kelas</button>
+        <button onclick="switchAdminMenu('margin')" id="tab-margin" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">3. Rekap Margin / Tahun</button>
+        <button onclick="switchAdminMenu('peringkat')" id="tab-peringkat" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">4. Peringkat</button>
+        <button onclick="switchAdminMenu('mutasi')" id="tab-mutasi" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">5. Kwitansi Mutasi</button>
+        <button onclick="switchAdminMenu('hapus')" id="tab-hapus" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">⚠️ Hapus Nasabah</button>
       </div>
-    </div>
 
-    <!-- MARGIN -->
-    <div id="content-margin" class="admin-card p-6 rounded-3xl space-y-6 hidden">
-      <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Margin Tabungan Sampah per Tahun</h2></div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900 w-16 text-center">No</th><th class="p-3.5 border border-emerald-900">Tahun</th><th class="p-3.5 border border-emerald-900 text-right">Berat</th><th class="p-3.5 border border-emerald-900 text-right">Tabungan</th><th class="p-3.5 border border-emerald-900 text-right">Penjualan</th><th class="p-3.5 border border-emerald-900 text-right">Profit</th></tr></thead>
-          <tbody id="tbodyRekapMargin" class="divide-y divide-slate-200"></tbody>
-        </table>
+      <!-- REKAP KESELURUHAN (BULANAN) -->
+      <div id="content-rekap" class="admin-card p-6 rounded-3xl space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
+          <div><h2 class="text-xl font-black uppercase text-slate-800">Rekapitulasi Data Seluruh Nasabah</h2><p class="text-xs text-slate-500">Filter berdasarkan Bulan dan Tahun.</p></div>
+          <div class="flex items-center gap-3">
+            <select id="filterBulan" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"><option value="ALL">Semua Bulan</option><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
+            <select id="filterTahun" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"></select>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900">Kelas</th><th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th><th class="p-3.5 border border-emerald-900 text-right">Tabungan (Rp)</th><th class="p-3.5 border border-emerald-900 text-right">Penjualan (Rp)</th><th class="p-3.5 border border-emerald-900 text-right">Margin (Rp)</th></tr></thead>
+            <tbody id="tbodyRekap" class="divide-y divide-slate-200"></tbody>
+            <tfoot><tr class="bg-amber-400 font-extrabold text-slate-900"><td class="p-3.5 border border-amber-500 uppercase">Total</td><td id="totBeratRekap" class="p-3.5 border border-amber-500 text-right">0,0 Kg</td><td id="totTabunganRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td><td id="totPenjualanRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td><td id="totMarginRekap" class="p-3.5 border border-amber-500 text-right">Rp 0</td></tr></tfoot>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- PERINGKAT -->
-    <div id="content-peringkat" class="admin-card p-6 rounded-3xl space-y-6 hidden">
-      <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Peringkat Tabungan Nasabah</h2></div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Murid</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kelas</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankMurid"></tbody></table></div></div>
-        <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Umum / Guru</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kategori</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankUmum"></tbody></table></div></div>
+      <!-- KELAS -->
+      <div id="content-kelas" class="admin-card p-6 rounded-3xl space-y-6 hidden">
+        <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Tabungan per Tingkat Kelas/Kategori</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900 w-16 text-center">No</th><th class="p-3.5 border border-emerald-900">Kelas / Kategori</th><th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th><th class="p-3.5 border border-emerald-900 text-right">Saldo (Rp)</th><th class="p-3.5 border border-emerald-900 text-center">Peringkat</th></tr></thead>
+            <tbody id="tbodyRekapKelas" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- MUTASI -->
-    <div id="content-mutasi" class="admin-card max-w-2xl mx-auto p-8 rounded-3xl space-y-6 hidden">
-      <div><h2 class="text-xl font-black uppercase text-slate-800">Form Kwitansi Mutasi Rekening</h2></div>
-      <form onsubmit="handleMutasi(event)" class="space-y-4">
-        <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Tanggal Mutasi</label><input type="date" id="mutasiTanggal" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"></div>
-        <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah</label><select id="mutasiNasabah" onchange="autoFillMutasi()" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
-        <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Kelas / Kategori</label><input type="text" id="mutasiKelas" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Total Berat Saat Ini</label><input type="text" id="mutasiBerat" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div></div>
-        <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Jumlah Penarikan (Rp)</label><input type="number" id="mutasiJumlah" required class="w-full p-3 admin-input rounded-xl text-sm font-bold text-red-600"></div>
-        <button type="submit" class="w-full gold-btn py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg mt-4">PROSES MUTASI & TARIK SALDO</button>
-      </form>
-    </div>
-
-    <!-- HAPUS NASABAH -->
-    <div id="content-hapus" class="admin-card max-w-xl mx-auto p-8 rounded-3xl space-y-6 hidden border-t-4 border-red-600">
-      <div><h2 class="text-xl font-black uppercase text-red-700">Hapus Data Nasabah</h2></div>
-      <div class="space-y-4">
-        <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah yang Akan Dihapus</label><select id="hapusNasabahSelect" class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
-        <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">⚠️ <strong>Perhatian:</strong> Tindakan ini bersifat permanen.</div>
-        <button onclick="konfirmasiHapusNasabah()" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all">HAPUS NASABAH & RIWAYAT TRANSAKSI</button>
+      <!-- MARGIN (PENYEMPURNAAN PENJUMLAHAN) -->
+      <div id="content-margin" class="admin-card p-6 rounded-3xl space-y-6 hidden">
+        <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Margin Tabungan Sampah per Tahun</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="table-header text-xs uppercase tracking-wider">
+                <th class="p-3.5 border border-emerald-900 w-16 text-center">No</th>
+                <th class="p-3.5 border border-emerald-900">Tahun</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Berat</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Tabungan</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Penjualan</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Profit</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyRekapMargin" class="divide-y divide-slate-200"></tbody>
+            <!-- FOOTER TOTAL MARGIN -->
+            <tfoot>
+              <tr class="bg-amber-400 font-extrabold text-slate-900">
+                <td colspan="2" class="p-3.5 border border-amber-500 uppercase text-center tracking-widest">Total Keseluruhan</td>
+                <td id="totBeratMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">0,0 Kg</td>
+                <td id="totTabunganMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">Rp 0</td>
+                <td id="totPenjualanMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">Rp 0</td>
+                <td id="totProfitMargin" class="p-3.5 border border-amber-500 text-right font-black text-emerald-800 drop-shadow-sm">Rp 0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
-    </div>
-  </main>
+
+      <!-- PERINGKAT -->
+      <div id="content-peringkat" class="admin-card p-6 rounded-3xl space-y-6 hidden">
+        <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Peringkat Tabungan Nasabah</h2></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Murid</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kelas</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankMurid"></tbody></table></div></div>
+          <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Umum / Guru</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kategori</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankUmum"></tbody></table></div></div>
+        </div>
+      </div>
+
+      <!-- MUTASI -->
+      <div id="content-mutasi" class="admin-card max-w-2xl mx-auto p-8 rounded-3xl space-y-6 hidden">
+        <div><h2 class="text-xl font-black uppercase text-slate-800">Form Kwitansi Mutasi Rekening</h2></div>
+        <form onsubmit="handleMutasi(event)" class="space-y-4">
+          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Tanggal Mutasi</label><input type="date" id="mutasiTanggal" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"></div>
+          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah</label><select id="mutasiNasabah" onchange="autoFillMutasi()" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
+          <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Kelas / Kategori</label><input type="text" id="mutasiKelas" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Total Berat Saat Ini</label><input type="text" id="mutasiBerat" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div></div>
+          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Jumlah Penarikan (Rp)</label><input type="number" id="mutasiJumlah" required class="w-full p-3 admin-input rounded-xl text-sm font-bold text-red-600"></div>
+          <button type="submit" class="w-full gold-btn py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg mt-4">PROSES MUTASI & TARIK SALDO</button>
+        </form>
+      </div>
+
+      <!-- HAPUS NASABAH -->
+      <div id="content-hapus" class="admin-card max-w-xl mx-auto p-8 rounded-3xl space-y-6 hidden border-t-4 border-red-600">
+        <div><h2 class="text-xl font-black uppercase text-red-700">Hapus Data Nasabah</h2></div>
+        <div class="space-y-4">
+          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah yang Akan Dihapus</label><select id="hapusNasabahSelect" class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
+          <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">⚠️ <strong>Perhatian:</strong> Tindakan ini bersifat permanen.</div>
+          <button onclick="konfirmasiHapusNasabah()" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all">HAPUS NASABAH & RIWAYAT TRANSAKSI</button>
+        </div>
+      </div>
+    </main>
+
+  </div> <!-- END OF APP WRAPPER -->
 
   <script>
     let daftarSemuaNasabah = [];
 
     window.onload = function() {
+      // Menampilkan Jendela Autorisasi Admin dengan Efek Backdrop Blur Kustom
       Swal.fire({
-        title: '🔒 Autorisasi Admin', input: 'password', inputPlaceholder: 'Masukkan PIN Admin...',
-        inputAttributes: { autocapitalize: 'off' }, allowOutsideClick: false, confirmButtonText: 'Masuk',
-        confirmButtonColor: '#064E3B', showCancelButton: true, cancelButtonText: 'Kembali', cancelButtonColor: '#d33'
+        title: '🔒 Autorisasi Admin', 
+        input: 'password', 
+        inputPlaceholder: 'Masukkan PIN Admin...',
+        inputAttributes: { autocapitalize: 'off' }, 
+        allowOutsideClick: false, 
+        confirmButtonText: 'Masuk',
+        confirmButtonColor: '#064E3B', 
+        showCancelButton: true, 
+        cancelButtonText: 'Kembali', 
+        cancelButtonColor: '#d33',
+        customClass: { backdrop: 'swal2-backdrop-custom' }
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({ title: 'Memverifikasi PIN...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ 
+            title: 'Memverifikasi PIN...', 
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading(),
+            customClass: { backdrop: 'swal2-backdrop-custom' } 
+          });
+          
           apiPOST('checkAdminPinB2', { pass: result.value }).then(isValid => {
             Swal.close();
-            if (isValid) initAdminPanel();
-            else Swal.fire('Akses Ditolak', 'PIN yang Anda masukkan salah!', 'error').then(() => window.location.href = "index.html");
+            if (isValid) {
+              // EFEK TRANSISI REVEAL JIKA LOGIN BERHASIL (Membuka Blur & Skala)
+              const app = document.getElementById('app-wrapper');
+              app.classList.remove('blur-xl', 'opacity-0', 'pointer-events-none', 'scale-95');
+              
+              initAdminPanel();
+            }
+            else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Akses Ditolak', 
+                text: 'PIN yang Anda masukkan salah!',
+                customClass: { backdrop: 'swal2-backdrop-custom' }
+              }).then(() => window.location.href = "index.html");
+            }
           });
         } else window.location.href = "index.html";
       });
@@ -191,12 +246,37 @@
       });
     }
 
+    // MODIFIKASI: PENAMBAHAN KALKULASI TOTAL REKAP MARGIN
     function loadRekapMargin() {
       Swal.fire({ title: 'Memuat Margin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       apiGET('getAdminRekapMarginData').then(res => {
         Swal.close(); const tbody = document.getElementById('tbodyRekapMargin');
-        if (!res || res.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`;
-        tbody.innerHTML = res.map((m, i) => `<tr class="hover:bg-slate-50"><td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td><td class="p-3.5 border border-slate-200 font-bold">${m.tahun}</td><td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.tabungan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.penjualan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.profit.toLocaleString('id-ID')}</td></tr>`).join('');
+        if (!res || res.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`;
+          document.getElementById('totBeratMargin').innerText = "0,0 Kg";
+          document.getElementById('totTabunganMargin').innerText = "Rp 0";
+          document.getElementById('totPenjualanMargin').innerText = "Rp 0";
+          document.getElementById('totProfitMargin').innerText = "Rp 0";
+          return;
+        }
+
+        let sumBerat = 0, sumTabungan = 0, sumPenjualan = 0, sumProfit = 0;
+
+        tbody.innerHTML = res.map((m, i) => {
+          // Menambahkan ke variabel Total
+          sumBerat += (m.berat || 0);
+          sumTabungan += (m.tabungan || 0);
+          sumPenjualan += (m.penjualan || 0);
+          sumProfit += (m.profit || 0);
+
+          return `<tr class="hover:bg-slate-50"><td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td><td class="p-3.5 border border-slate-200 font-bold">${m.tahun}</td><td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.tabungan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.penjualan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.profit.toLocaleString('id-ID')}</td></tr>`;
+        }).join('');
+
+        // Menuliskan kalkulasi ke dalam element TFOOT
+        document.getElementById('totBeratMargin').innerText = sumBerat.toFixed(1) + " Kg";
+        document.getElementById('totTabunganMargin').innerText = "Rp " + sumTabungan.toLocaleString('id-ID');
+        document.getElementById('totPenjualanMargin').innerText = "Rp " + sumPenjualan.toLocaleString('id-ID');
+        document.getElementById('totProfitMargin').innerText = "Rp " + sumProfit.toLocaleString('id-ID');
       });
     }
 
