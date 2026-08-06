@@ -9,16 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root { --gold-gradient: linear-gradient(135deg, #F3E7C4 0%, #D4AF37 50%, #AA771C 100%); }
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; overflow-x: hidden; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
     .admin-card { background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border-top: 4px solid #D4AF37; }
     .gold-btn { background: var(--gold-gradient); color: #022C22; font-weight: 800; transition: all 0.3s ease; }
     .gold-btn:hover { box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); transform: translateY(-1px); }
     .admin-input { background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; }
     .admin-input:focus { border-color: #D4AF37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); outline: none; }
     .table-header { background-color: #064E3B; color: #ffffff; }
-    
-    /* Custom Swapper Background - Tema Hijau Gelap Mewah */
-    .swal2-backdrop-custom { background: rgba(2, 44, 34, 0.85) !important; backdrop-filter: blur(8px); }
   </style>
 </head>
 <body class="min-height-screen pb-16">
@@ -42,10 +39,9 @@
     }
   </script>
 
-  <!-- APP WRAPPER: UNTUK EFEK BLUR DAN TRANSISI MUNCUL -->
-  <!-- Script akan menghapus class blur dan opacity setelah login sukses -->
-  <div id="app-wrapper" class="filter blur-xl opacity-0 pointer-events-none transition-all duration-1000 ease-out transform scale-95">
-    
+  <!-- BUNGKUS HEADER DAN MAIN DENGAN DIV BLUR INI -->
+  <div id="app-wrapper" class="blur-md opacity-30 pointer-events-none transition-all duration-1000 ease-in-out">
+
     <header class="bg-[#022C22] text-white shadow-xl sticky top-0 z-40 border-b border-amber-500/30">
       <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-3">
@@ -68,7 +64,7 @@
         <button onclick="switchAdminMenu('hapus')" id="tab-hapus" class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">⚠️ Hapus Nasabah</button>
       </div>
 
-      <!-- REKAP KESELURUHAN (BULANAN) -->
+      <!-- REKAP -->
       <div id="content-rekap" class="admin-card p-6 rounded-3xl space-y-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
           <div><h2 class="text-xl font-black uppercase text-slate-800">Rekapitulasi Data Seluruh Nasabah</h2><p class="text-xs text-slate-500">Filter berdasarkan Bulan dan Tahun.</p></div>
@@ -97,7 +93,7 @@
         </div>
       </div>
 
-      <!-- MARGIN (PENYEMPURNAAN PENJUMLAHAN) -->
+      <!-- MARGIN (Dengan Penambahan Tfoot Total) -->
       <div id="content-margin" class="admin-card p-6 rounded-3xl space-y-6 hidden">
         <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Margin Tabungan Sampah per Tahun</h2></div>
         <div class="overflow-x-auto">
@@ -113,14 +109,15 @@
               </tr>
             </thead>
             <tbody id="tbodyRekapMargin" class="divide-y divide-slate-200"></tbody>
-            <!-- FOOTER TOTAL MARGIN -->
+            
+            <!-- BAGIAN TFOOT BARU UNTUK TOTAL -->
             <tfoot>
               <tr class="bg-amber-400 font-extrabold text-slate-900">
-                <td colspan="2" class="p-3.5 border border-amber-500 uppercase text-center tracking-widest">Total Keseluruhan</td>
-                <td id="totBeratMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">0,0 Kg</td>
-                <td id="totTabunganMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">Rp 0</td>
-                <td id="totPenjualanMargin" class="p-3.5 border border-amber-500 text-right text-emerald-900 drop-shadow-sm">Rp 0</td>
-                <td id="totProfitMargin" class="p-3.5 border border-amber-500 text-right font-black text-emerald-800 drop-shadow-sm">Rp 0</td>
+                <td colspan="2" class="p-3.5 border border-amber-500 uppercase text-center">Total Penjumlahan</td>
+                <td id="totBeratMargin" class="p-3.5 border border-amber-500 text-right">0,0 Kg</td>
+                <td id="totTabunganMargin" class="p-3.5 border border-amber-500 text-right">Rp 0</td>
+                <td id="totPenjualanMargin" class="p-3.5 border border-amber-500 text-right">Rp 0</td>
+                <td id="totProfitMargin" class="p-3.5 border border-amber-500 text-right">Rp 0</td>
               </tr>
             </tfoot>
           </table>
@@ -159,13 +156,13 @@
       </div>
     </main>
 
-  </div> <!-- END OF APP WRAPPER -->
+  </div> <!-- PENUTUP DIV BLUR (app-wrapper) -->
 
   <script>
     let daftarSemuaNasabah = [];
 
+    // PENYEMPURNAAN EFEK TRANSISI BLUR PADA LOGIN
     window.onload = function() {
-      // Menampilkan Jendela Autorisasi Admin dengan Efek Backdrop Blur Kustom
       Swal.fire({
         title: '🔒 Autorisasi Admin', 
         input: 'password', 
@@ -176,36 +173,26 @@
         confirmButtonColor: '#064E3B', 
         showCancelButton: true, 
         cancelButtonText: 'Kembali', 
-        cancelButtonColor: '#d33',
-        customClass: { backdrop: 'swal2-backdrop-custom' }
+        cancelButtonColor: '#d33'
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({ 
-            title: 'Memverifikasi PIN...', 
-            allowOutsideClick: false, 
-            didOpen: () => Swal.showLoading(),
-            customClass: { backdrop: 'swal2-backdrop-custom' } 
-          });
+          Swal.fire({ title: 'Memverifikasi PIN...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
           
           apiPOST('checkAdminPinB2', { pass: result.value }).then(isValid => {
             Swal.close();
             if (isValid) {
-              // EFEK TRANSISI REVEAL JIKA LOGIN BERHASIL (Membuka Blur & Skala)
-              const app = document.getElementById('app-wrapper');
-              app.classList.remove('blur-xl', 'opacity-0', 'pointer-events-none', 'scale-95');
+              // HAPUS EFEK BLUR SECARA PERLAHAN
+              const wrapper = document.getElementById('app-wrapper');
+              wrapper.classList.remove('blur-md', 'opacity-30', 'pointer-events-none');
               
               initAdminPanel();
-            }
-            else {
-              Swal.fire({
-                icon: 'error',
-                title: 'Akses Ditolak', 
-                text: 'PIN yang Anda masukkan salah!',
-                customClass: { backdrop: 'swal2-backdrop-custom' }
-              }).then(() => window.location.href = "index.html");
+            } else {
+              Swal.fire('Akses Ditolak', 'PIN yang Anda masukkan salah!', 'error').then(() => window.location.href = "index.html");
             }
           });
-        } else window.location.href = "index.html";
+        } else {
+          window.location.href = "index.html";
+        }
       });
     };
 
@@ -246,37 +233,47 @@
       });
     }
 
-    // MODIFIKASI: PENAMBAHAN KALKULASI TOTAL REKAP MARGIN
+    // PENYEMPURNAAN PENJUMLAHAN TOTAL REKAP MARGIN
     function loadRekapMargin() {
       Swal.fire({ title: 'Memuat Margin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       apiGET('getAdminRekapMarginData').then(res => {
-        Swal.close(); const tbody = document.getElementById('tbodyRekapMargin');
-        if (!res || res.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`;
+        Swal.close(); 
+        const tbody = document.getElementById('tbodyRekapMargin');
+        
+        // Reset jika data kosong
+        if (!res || res.length === 0) { 
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`; 
           document.getElementById('totBeratMargin').innerText = "0,0 Kg";
           document.getElementById('totTabunganMargin').innerText = "Rp 0";
           document.getElementById('totPenjualanMargin').innerText = "Rp 0";
           document.getElementById('totProfitMargin').innerText = "Rp 0";
-          return;
+          return; 
         }
 
-        let sumBerat = 0, sumTabungan = 0, sumPenjualan = 0, sumProfit = 0;
+        let totalBerat = 0, totalTabungan = 0, totalPenjualan = 0, totalProfit = 0;
 
         tbody.innerHTML = res.map((m, i) => {
-          // Menambahkan ke variabel Total
-          sumBerat += (m.berat || 0);
-          sumTabungan += (m.tabungan || 0);
-          sumPenjualan += (m.penjualan || 0);
-          sumProfit += (m.profit || 0);
+          // Menjumlahkan data sambil melakukan map/looping
+          totalBerat += m.berat;
+          totalTabungan += m.tabungan;
+          totalPenjualan += m.penjualan;
+          totalProfit += m.profit;
 
-          return `<tr class="hover:bg-slate-50"><td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td><td class="p-3.5 border border-slate-200 font-bold">${m.tahun}</td><td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.tabungan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right">Rp ${m.penjualan.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.profit.toLocaleString('id-ID')}</td></tr>`;
+          return `<tr class="hover:bg-slate-50">
+            <td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td>
+            <td class="p-3.5 border border-slate-200 font-bold">${m.tahun}</td>
+            <td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td>
+            <td class="p-3.5 border border-slate-200 text-right">Rp ${m.tabungan.toLocaleString('id-ID')}</td>
+            <td class="p-3.5 border border-slate-200 text-right">Rp ${m.penjualan.toLocaleString('id-ID')}</td>
+            <td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.profit.toLocaleString('id-ID')}</td>
+          </tr>`;
         }).join('');
 
-        // Menuliskan kalkulasi ke dalam element TFOOT
-        document.getElementById('totBeratMargin').innerText = sumBerat.toFixed(1) + " Kg";
-        document.getElementById('totTabunganMargin').innerText = "Rp " + sumTabungan.toLocaleString('id-ID');
-        document.getElementById('totPenjualanMargin').innerText = "Rp " + sumPenjualan.toLocaleString('id-ID');
-        document.getElementById('totProfitMargin').innerText = "Rp " + sumProfit.toLocaleString('id-ID');
+        // Menuliskan hasil penjumlahan ke baris Footer
+        document.getElementById('totBeratMargin').innerText = totalBerat.toFixed(1) + " Kg";
+        document.getElementById('totTabunganMargin').innerText = "Rp " + totalTabungan.toLocaleString('id-ID');
+        document.getElementById('totPenjualanMargin').innerText = "Rp " + totalPenjualan.toLocaleString('id-ID');
+        document.getElementById('totProfitMargin').innerText = "Rp " + totalProfit.toLocaleString('id-ID');
       });
     }
 
