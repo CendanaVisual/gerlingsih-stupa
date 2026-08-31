@@ -6,6 +6,7 @@
   <title>Dashboard Administrator - GERLINGSIH STUPA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root { --gold-gradient: linear-gradient(135deg, #F3E7C4 0%, #D4AF37 50%, #AA771C 100%); }
@@ -18,35 +19,31 @@
     .table-header { background-color: #064E3B; color: #ffffff; }
   </style>
 </head>
-<body class="min-height-screen pb-16">
+<body class="min-h-screen pb-16">
 
-  <!-- KONFIGURASI API -->
+  <!-- KONFIGURASI SUPABASE -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz-zJD4xJeuvGNxzMz5FdDvMyb09yRyGAHN6SPvFvnoo3TMXn6i1d_u9AJPc_9Rm7Gt/exec"; 
+    const SUPABASE_URL = "https://fltppndfmfuckssbvzpk.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdHBwbmRmbWZ1Y2tzc2J2enBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MDM0NTIsImV4cCI6MjEwMzI3OTQ1Mn0.u4kKTlO2dXVxdRlcmZ27klFHAUSyXAIowtdHA49GPR8";
     
-    async function apiGET(action, params = {}) {
-      let url = `${API_URL}?action=${action}`;
-      for (let k in params) url += `&${k}=${encodeURIComponent(params[k])}`;
-      let res = await fetch(url); return await res.json();
-    }
-    async function apiPOST(action, payload) {
-      let res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: action, ...payload })
-      });
-      return await res.json();
-    }
+    // Cara resmi CDN supabase-js v2
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   </script>
 
-  <!-- BUNGKUS HEADER DAN MAIN DENGAN DIV BLUR INI -->
+  <!-- BUNGKUS HEADER DAN MAIN DENGAN DIV BLUR -->
   <div id="app-wrapper" class="blur-md opacity-30 pointer-events-none transition-all duration-1000 ease-in-out">
 
     <header class="bg-[#022C22] text-white shadow-xl sticky top-0 z-40 border-b border-amber-500/30">
       <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-white p-1 flex items-center justify-center shadow-md"><img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" alt="Logo" class="w-full h-full object-contain"></div>
-          <div><h1 class="font-extrabold text-lg tracking-wider">PANEL ADMINISTRATOR</h1><p class="text-xs text-amber-300 font-medium">Bank Sampah Gerlingsih Stupa</p></div>
+          <div class="w-10 h-10 rounded-full bg-white p-1 flex items-center justify-center shadow-md">
+            <img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" alt="Logo" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h1 class="font-extrabold text-lg tracking-wider">PANEL ADMINISTRATOR</h1>
+            <p class="text-xs text-amber-300 font-medium">Bank Sampah Gerlingsih Stupa</p>
+          </div>
         </div>
         <div class="flex items-center gap-2 flex-wrap justify-center">
           <a href="index.html" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all border border-white/20">← Kembali ke Beranda</a>
@@ -67,15 +64,21 @@
       <!-- REKAPITULASI -->
       <div id="content-rekap" class="admin-card p-6 rounded-3xl space-y-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
-          <div><h2 class="text-xl font-black uppercase text-slate-800">Rekapitulasi Data Seluruh Nasabah</h2><p class="text-xs text-slate-500">Filter berdasarkan Bulan dan Tahun.</p></div>
+          <div>
+            <h2 class="text-xl font-black uppercase text-slate-800">Rekapitulasi Data Seluruh Nasabah</h2>
+            <p class="text-xs text-slate-500">Filter berdasarkan Bulan dan Tahun.</p>
+          </div>
           <div class="flex items-center gap-3">
-            
-            <!-- TOMBOL SEMBUNYIKAN UANG -->
             <button id="btnToggleKolom" onclick="toggleKolomRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 transition-all shadow-sm">
               👁️ Sembunyikan Uang
             </button>
-
-            <select id="filterBulan" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"><option value="ALL">Semua Bulan</option><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
+            <select id="filterBulan" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold">
+              <option value="ALL">Semua Bulan</option>
+              <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+              <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+              <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+              <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+            </select>
             <select id="filterTahun" onchange="loadDataRekap()" class="admin-input p-2.5 rounded-xl text-xs font-bold"></select>
           </div>
         </div>
@@ -109,13 +112,21 @@
         <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Tabungan per Tingkat Kelas/Kategori</h2></div>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-sm">
-            <thead><tr class="table-header text-xs uppercase tracking-wider"><th class="p-3.5 border border-emerald-900 w-16 text-center">No</th><th class="p-3.5 border border-emerald-900">Kelas / Kategori</th><th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th><th class="p-3.5 border border-emerald-900 text-right">Saldo (Rp)</th><th class="p-3.5 border border-emerald-900 text-center">Peringkat</th></tr></thead>
+            <thead>
+              <tr class="table-header text-xs uppercase tracking-wider">
+                <th class="p-3.5 border border-emerald-900 w-16 text-center">No</th>
+                <th class="p-3.5 border border-emerald-900">Kelas / Kategori</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Berat (Kg)</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Saldo (Rp)</th>
+                <th class="p-3.5 border border-emerald-900 text-center">Peringkat</th>
+              </tr>
+            </thead>
             <tbody id="tbodyRekapKelas" class="divide-y divide-slate-200"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- MARGIN (Dengan Penambahan Tfoot Total) -->
+      <!-- MARGIN -->
       <div id="content-margin" class="admin-card p-6 rounded-3xl space-y-6 hidden">
         <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Margin Tabungan Sampah per Tahun</h2></div>
         <div class="overflow-x-auto">
@@ -125,14 +136,12 @@
                 <th class="p-3.5 border border-emerald-900 w-16 text-center">No</th>
                 <th class="p-3.5 border border-emerald-900">Tahun</th>
                 <th class="p-3.5 border border-emerald-900 text-right">Berat</th>
-                <th class="p-3.5 border border-emerald-900 text-right">Tabungan</th>
-                <th class="p-3.5 border border-emerald-900 text-right">Penjualan</th>
-                <th class="p-3.5 border border-emerald-900 text-right">Profit</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Total Beli</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Total Jual</th>
+                <th class="p-3.5 border border-emerald-900 text-right">Margin</th>
               </tr>
             </thead>
             <tbody id="tbodyRekapMargin" class="divide-y divide-slate-200"></tbody>
-            
-            <!-- BAGIAN TFOOT BARU UNTUK TOTAL -->
             <tfoot>
               <tr class="bg-amber-400 font-extrabold text-slate-900">
                 <td colspan="2" class="p-3.5 border border-amber-500 uppercase text-center">Total Penjumlahan</td>
@@ -150,8 +159,34 @@
       <div id="content-peringkat" class="admin-card p-6 rounded-3xl space-y-6 hidden">
         <div><h2 class="text-xl font-black uppercase text-slate-800">Rekap Peringkat Tabungan Nasabah</h2></div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Murid</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kelas</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankMurid"></tbody></table></div></div>
-          <div class="space-y-3"><h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Umum / Guru</h3><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-red-700 text-white"><th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th><th class="p-2 border">Kategori</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th></tr></thead><tbody id="tbodyRankUmum"></tbody></table></div></div>
+          <div class="space-y-3">
+            <h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Murid</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-red-700 text-white">
+                    <th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th>
+                    <th class="p-2 border">Kelas</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyRankMurid"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <h3 class="font-bold text-sm text-emerald-800 uppercase bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">Peringkat Nasabah Umum / Guru</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-red-700 text-white">
+                    <th class="p-2 border">Rank</th><th class="p-2 border">ID</th><th class="p-2 border">Nama</th>
+                    <th class="p-2 border">Kategori</th><th class="p-2 border text-right">Berat</th><th class="p-2 border text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyRankUmum"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -159,10 +194,30 @@
       <div id="content-mutasi" class="admin-card max-w-2xl mx-auto p-8 rounded-3xl space-y-6 hidden">
         <div><h2 class="text-xl font-black uppercase text-slate-800">Form Kwitansi Mutasi Rekening</h2></div>
         <form onsubmit="handleMutasi(event)" class="space-y-4">
-          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Tanggal Mutasi</label><input type="date" id="mutasiTanggal" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"></div>
-          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah</label><select id="mutasiNasabah" onchange="autoFillMutasi()" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
-          <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Kelas / Kategori</label><input type="text" id="mutasiKelas" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div><div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Total Berat Saat Ini</label><input type="text" id="mutasiBerat" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold"></div></div>
-          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Jumlah Penarikan (Rp)</label><input type="number" id="mutasiJumlah" required class="w-full p-3 admin-input rounded-xl text-sm font-bold text-red-600"></div>
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Tanggal Mutasi</label>
+            <input type="date" id="mutasiTanggal" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah</label>
+            <select id="mutasiNasabah" onchange="autoFillMutasi()" required class="w-full p-3 admin-input rounded-xl text-sm font-semibold">
+              <option value="">-- Pilih Nasabah --</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Kelas / Kategori</label>
+              <input type="text" id="mutasiKelas" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold">
+            </div>
+            <div>
+              <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Total Berat Saat Ini</label>
+              <input type="text" id="mutasiBerat" readonly class="w-full p-3 bg-slate-100 admin-input rounded-xl text-sm font-semibold">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Jumlah Penarikan (Rp)</label>
+            <input type="number" id="mutasiJumlah" required class="w-full p-3 admin-input rounded-xl text-sm font-bold text-red-600">
+          </div>
           <button type="submit" class="w-full gold-btn py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg mt-4">PROSES MUTASI & TARIK SALDO</button>
         </form>
       </div>
@@ -171,20 +226,28 @@
       <div id="content-hapus" class="admin-card max-w-xl mx-auto p-8 rounded-3xl space-y-6 hidden border-t-4 border-red-600">
         <div><h2 class="text-xl font-black uppercase text-red-700">Hapus Data Nasabah</h2></div>
         <div class="space-y-4">
-          <div><label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah yang Akan Dihapus</label><select id="hapusNasabahSelect" class="w-full p-3 admin-input rounded-xl text-sm font-semibold"><option value="">-- Pilih Nasabah --</option></select></div>
-          <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">⚠️ <strong>Perhatian:</strong> Tindakan ini bersifat permanen.</div>
-          <button onclick="konfirmasiHapusNasabah()" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all">HAPUS NASABAH & RIWAYAT TRANSAKSI</button>
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-600 mb-1">Pilih Nasabah yang Akan Dihapus</label>
+            <select id="hapusNasabahSelect" class="w-full p-3 admin-input rounded-xl text-sm font-semibold">
+              <option value="">-- Pilih Nasabah --</option>
+            </select>
+          </div>
+          <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">
+            ⚠️ <strong>Perhatian:</strong> Tindakan ini bersifat permanen (soft delete).
+          </div>
+          <button onclick="konfirmasiHapusNasabah()" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all">
+            HAPUS NASABAH & RIWAYAT TRANSAKSI
+          </button>
         </div>
       </div>
     </main>
-
-  </div> <!-- PENUTUP DIV BLUR (app-wrapper) -->
+  </div>
 
   <script>
     let daftarSemuaNasabah = [];
-    let isUangHidden = false; // State untuk Toggle Sembunyikan Uang
+    let isUangHidden = false;
 
-    // PENYEMPURNAAN EFEK TRANSISI BLUR PADA LOGIN
+    // Login Admin
     window.onload = function() {
       Swal.fire({
         title: '🔒 Autorisasi Admin', 
@@ -197,22 +260,33 @@
         showCancelButton: true, 
         cancelButtonText: 'Kembali', 
         cancelButtonColor: '#d33'
-      }).then((result) => {
+      }).then(async (result) => {
         if (result.isConfirmed) {
           Swal.fire({ title: 'Memverifikasi PIN...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
           
-          apiPOST('checkAdminPinB2', { pass: result.value }).then(isValid => {
+          try {
+            const { data, error } = await supabaseClient
+              .from('admin_config')
+              .select('value')
+              .eq('key', 'admin_pin')
+              .single();
+            
             Swal.close();
-            if (isValid) {
-              // HAPUS EFEK BLUR SECARA PERLAHAN
+            
+            if (error) throw error;
+            
+            if (data && data.value === result.value.trim()) {
               const wrapper = document.getElementById('app-wrapper');
               wrapper.classList.remove('blur-md', 'opacity-30', 'pointer-events-none');
-              
               initAdminPanel();
             } else {
-              Swal.fire('Akses Ditolak', 'PIN yang Anda masukkan salah!', 'error').then(() => window.location.href = "index.html");
+              Swal.fire('Akses Ditolak', 'PIN yang Anda masukkan salah!', 'error')
+                .then(() => window.location.href = "index.html");
             }
-          });
+          } catch (err) {
+            Swal.close();
+            Swal.fire('Error', err.message, 'error').then(() => window.location.href = "index.html");
+          }
         } else {
           window.location.href = "index.html";
         }
@@ -220,23 +294,36 @@
     };
 
     function initAdminPanel() {
-      const selectTahun = document.getElementById('filterTahun'); const currentYear = new Date().getFullYear(); let optHTML = '';
-      for (let y = 2025; y <= 2050; y++) optHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
-      selectTahun.innerHTML = optHTML; document.getElementById('mutasiTanggal').valueAsDate = new Date();
-      loadDataRekap(); loadDaftarNasabahDropdown();
+      const selectTahun = document.getElementById('filterTahun');
+      const currentYear = new Date().getFullYear();
+      let optHTML = '';
+      // Tahun mulai 2024 agar data historis bisa difilter
+      for (let y = 2024; y <= 2050; y++) {
+        optHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+      }
+      selectTahun.innerHTML = optHTML;
+      document.getElementById('mutasiTanggal').valueAsDate = new Date();
+      loadDataRekap();
+      loadDaftarNasabahDropdown();
     }
 
     function switchAdminMenu(menu) {
       ['rekap', 'kelas', 'margin', 'peringkat', 'mutasi', 'hapus'].forEach(m => {
         document.getElementById(`content-${m}`).classList.add('hidden');
-        document.getElementById(`tab-${m}`).className = m === 'hapus' ? "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" : "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200";
+        document.getElementById(`tab-${m}`).className = m === 'hapus' 
+          ? "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" 
+          : "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-slate-100 text-slate-600 hover:bg-slate-200";
       });
       document.getElementById(`content-${menu}`).classList.remove('hidden');
-      document.getElementById(`tab-${menu}`).className = menu === 'hapus' ? "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-600 text-white shadow-md border border-red-700" : "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all gold-btn shadow-md";
-      if (menu === 'kelas') loadRekapKelas(); if (menu === 'margin') loadRekapMargin(); if (menu === 'peringkat') loadRekapPeringkat();
+      document.getElementById(`tab-${menu}`).className = menu === 'hapus' 
+        ? "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all bg-red-600 text-white shadow-md border border-red-700" 
+        : "px-5 py-2.5 rounded-xl text-xs font-bold uppercase transition-all gold-btn shadow-md";
+      
+      if (menu === 'kelas') loadRekapKelas();
+      if (menu === 'margin') loadRekapMargin();
+      if (menu === 'peringkat') loadRekapPeringkat();
     }
 
-    // FUNGSI UNTUK MENYEMBUNYIKAN KOLOM TABUNGAN DAN MARGIN
     function toggleKolomRekap() {
       isUangHidden = !isUangHidden;
       const cols = document.querySelectorAll('.col-uang');
@@ -247,145 +334,505 @@
       
       const btn = document.getElementById('btnToggleKolom');
       btn.innerHTML = isUangHidden ? '👁️ Tampilkan Uang' : '👁️ Sembunyikan Uang';
-      if(isUangHidden) {
-          btn.classList.add('bg-amber-100', 'text-amber-800');
-          btn.classList.remove('bg-white');
+      if (isUangHidden) {
+        btn.classList.add('bg-amber-100', 'text-amber-800');
+        btn.classList.remove('bg-white');
       } else {
-          btn.classList.remove('bg-amber-100', 'text-amber-800');
-          btn.classList.add('bg-white');
+        btn.classList.remove('bg-amber-100', 'text-amber-800');
+        btn.classList.add('bg-white');
       }
     }
 
-    function loadDataRekap() {
-      const bulan = document.getElementById('filterBulan').value, tahun = document.getElementById('filterTahun').value;
-      Swal.fire({ title: 'Memuat Rekap...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      apiGET('getAdminRekapData', { bulan: bulan, tahun: tahun }).then(res => {
-        Swal.close(); const tbody = document.getElementById('tbodyRekap');
-        if (!res || res.data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`; return; }
-        
-        // Mempertahankan class col-uang beserta statenya (hidden atau tidak)
-        const hiddenClass = isUangHidden ? 'hidden' : '';
+    // Helper: ambil tahun & bulan (WITA / UTC+8) dari baris transaksi
+    function getTransaksiYM(row) {
+      const raw = row.timestamp || row.created_at || row.tanggal || null;
+      if (!raw) return null;
+      let s = String(raw).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s = s + 'T12:00:00+08:00';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return null;
+      try {
+        const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Makassar', year: 'numeric', month: '2-digit' });
+        const parts = fmt.formatToParts(d);
+        const year = parseInt(parts.find(p => p.type === 'year').value);
+        const month = parseInt(parts.find(p => p.type === 'month').value);
+        return { year, month, date: d };
+      } catch (e) {
+        return { year: d.getFullYear(), month: d.getMonth() + 1, date: d };
+      }
+    }
 
-        tbody.innerHTML = res.data.map(item => `
-          <tr class="hover:bg-slate-50 transition-all">
-            <td class="p-3.5 border border-slate-200 font-bold">${item.kelas}</td>
-            <td class="p-3.5 border border-slate-200 text-right">${item.berat.toFixed(1)} Kg</td>
-            <td class="p-3.5 border border-slate-200 text-right col-uang ${hiddenClass}">Rp ${item.tabungan.toLocaleString('id-ID')}</td>
-            <td class="p-3.5 border border-slate-200 text-right">Rp ${item.penjualan.toLocaleString('id-ID')}</td>
-            <td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600 col-uang ${hiddenClass}">Rp ${item.margin.toLocaleString('id-ID')}</td>
+    // Ambil SEMUA baris transaksi (lewati batas default 1000 baris Supabase)
+    async function fetchAllTransaksi(selectCols) {
+      const pageSize = 1000;
+      let all = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabaseClient
+          .from('transaksi')
+          .select(selectCols)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
+    }
+
+    async function loadDataRekap() {
+      const bulan = document.getElementById('filterBulan').value;
+      const tahun = parseInt(document.getElementById('filterTahun').value);
+      
+      Swal.fire({ title: 'Memuat Rekap...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+        // Pagination: ambil SEMUA data (lewati batas 1000 baris Supabase)
+        const data = await fetchAllTransaksi('kelas, berat, total_beli, total_jual, margin, timestamp, created_at');
+        
+        // Filter tahun + bulan (zona Asia/Makassar)
+        let filtered = (data || []).filter(r => {
+          const ym = getTransaksiYM(r);
+          if (!ym) return false;
+          if (ym.year !== tahun) return false;
+          if (bulan !== 'ALL' && ym.month !== parseInt(bulan)) return false;
+          return true;
+        });
+        
+        // Group by kelas
+        const rekapMap = {};
+        let totB = 0, totT = 0, totP = 0, totM = 0;
+        
+        filtered.forEach(r => {
+          const kelas = (r.kelas || 'Lainnya').toString().trim() || 'Lainnya';
+          if (!rekapMap[kelas]) {
+            rekapMap[kelas] = { kelas, berat: 0, tabungan: 0, penjualan: 0, margin: 0 };
+          }
+          const berat = parseFloat(r.berat) || 0;
+          const tabungan = parseFloat(r.total_beli) || 0;
+          const penjualan = parseFloat(r.total_jual) || 0;
+          const margin = parseFloat(r.margin) || (penjualan - tabungan);
+          
+          rekapMap[kelas].berat += berat;
+          rekapMap[kelas].tabungan += tabungan;
+          rekapMap[kelas].penjualan += penjualan;
+          rekapMap[kelas].margin += margin;
+          
+          totB += berat;
+          totT += tabungan;
+          totP += penjualan;
+          totM += margin;
+        });
+        
+        const resData = Object.values(rekapMap).sort((a, b) => a.kelas.localeCompare(b.kelas, 'id'));
+        const tbody = document.getElementById('tbodyRekap');
+        const hiddenClass = isUangHidden ? 'hidden' : '';
+        
+        if (resData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Data kosong untuk filter bulan/tahun ini. Coba "Semua Bulan" atau ganti tahun.</td></tr>`;
+        } else {
+          tbody.innerHTML = resData.map(item => `
+            <tr class="hover:bg-slate-50 transition-all">
+              <td class="p-3.5 border border-slate-200 font-bold">${item.kelas}</td>
+              <td class="p-3.5 border border-slate-200 text-right">${item.berat.toFixed(1)} Kg</td>
+              <td class="p-3.5 border border-slate-200 text-right col-uang ${hiddenClass}">Rp ${item.tabungan.toLocaleString('id-ID')}</td>
+              <td class="p-3.5 border border-slate-200 text-right">Rp ${item.penjualan.toLocaleString('id-ID')}</td>
+              <td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600 col-uang ${hiddenClass}">Rp ${item.margin.toLocaleString('id-ID')}</td>
+            </tr>
+          `).join('');
+        }
+        
+        document.getElementById('totBeratRekap').innerText = totB.toFixed(1) + " Kg";
+        document.getElementById('totTabunganRekap').innerText = "Rp " + totT.toLocaleString('id-ID');
+        document.getElementById('totPenjualanRekap').innerText = "Rp " + totP.toLocaleString('id-ID');
+        document.getElementById('totMarginRekap').innerText = "Rp " + totM.toLocaleString('id-ID');
+        
+        Swal.close();
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+      }
+    }
+
+    // Kelas murid biasanya pola seperti 1A, 2B, 6C; selain itu = umum/guru
+    function isKelasMurid(kelas) {
+      const k = (kelas || '').toString().trim();
+      return /^\d+[A-Za-z]$/.test(k) || /^\d+\s*[A-Za-z]$/.test(k);
+    }
+
+    async function loadRekapKelas() {
+      Swal.fire({ title: 'Memuat Rekap Kelas...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+        // Ambil semua nasabah aktif (pagination jika banyak)
+        let allNasabah = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data, error } = await supabaseClient
+            .from('nasabah')
+            .select('kelas, total_berat, total_saldo, kategori')
+            .eq('is_active', true)
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allNasabah = allNasabah.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        
+        const map = {};
+        allNasabah.forEach(r => {
+          const kelas = (r.kelas || 'Lainnya').toString().trim();
+          if (!map[kelas]) map[kelas] = { kelas, berat: 0, saldo: 0 };
+          map[kelas].berat += parseFloat(r.total_berat) || 0;
+          map[kelas].saldo += parseFloat(r.total_saldo) || 0;
+        });
+        
+        const list = Object.values(map);
+        
+        // Pisah murid vs umum/guru
+        const murid = list.filter(r => isKelasMurid(r.kelas)).sort((a, b) => b.saldo - a.saldo);
+        const umum = list.filter(r => !isKelasMurid(r.kelas)).sort((a, b) => b.saldo - a.saldo);
+        
+        // Beri peringkat HANYA untuk murid
+        murid.forEach((r, i) => { r.peringkat = i + 1; r.jenis = 'murid'; });
+        umum.forEach(r => { r.peringkat = null; r.jenis = 'umum'; });
+        
+        // Tampilkan: murid berperingkat dulu, lalu umum/guru tanpa peringkat
+        const combined = [...murid, ...umum];
+        const tbody = document.getElementById('tbodyRekapKelas');
+        
+        if (combined.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`;
+        } else {
+          tbody.innerHTML = combined.map((r, i) => `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td>
+              <td class="p-3.5 border border-slate-200 font-bold text-emerald-800">${r.kelas}${r.jenis === 'umum' ? ' <span class="text-[10px] text-slate-400 font-normal">(umum)</span>' : ''}</td>
+              <td class="p-3.5 border border-slate-200 text-right">${r.berat.toFixed(1)} Kg</td>
+              <td class="p-3.5 border border-slate-200 text-right font-extrabold text-emerald-600">Rp ${r.saldo.toLocaleString('id-ID')}</td>
+              <td class="p-3.5 border border-slate-200 text-center font-bold">${r.peringkat ? '#' + r.peringkat : '—'}</td>
+            </tr>
+          `).join('');
+        }
+        Swal.close();
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+      }
+    }
+
+    async function loadRekapMargin() {
+      Swal.fire({ title: 'Memuat Margin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+        // 1) Data manual historis (2024, 2025, dll) dari tabel rekap_margin_manual
+        let manualRows = [];
+        try {
+          const { data: manual } = await supabaseClient
+            .from('rekap_margin_manual')
+            .select('tahun, berat, total_beli, total_jual, margin');
+          manualRows = manual || [];
+        } catch (e) {
+          // Tabel belum ada → abaikan
+          manualRows = [];
+        }
+        
+        // 2) Agregasi otomatis dari transaksi (pagination: semua baris)
+        const txData = await fetchAllTransaksi('berat, total_beli, total_jual, margin, timestamp, created_at');
+        
+        const autoMap = {};
+        (txData || []).forEach(r => {
+          const ym = getTransaksiYM(r);
+          if (!ym) return;
+          const tahun = ym.year;
+          if (tahun < 2024 || tahun > 2050) return;
+          
+          if (!autoMap[tahun]) {
+            autoMap[tahun] = { tahun, berat: 0, total_beli: 0, total_jual: 0, margin: 0, sumber: 'auto' };
+          }
+          const berat = parseFloat(r.berat) || 0;
+          const totalBeli = parseFloat(r.total_beli) || 0;
+          const totalJual = parseFloat(r.total_jual) || 0;
+          const margin = parseFloat(r.margin) || (totalJual - totalBeli);
+          
+          autoMap[tahun].berat += berat;
+          autoMap[tahun].total_beli += totalBeli;
+          autoMap[tahun].total_jual += totalJual;
+          autoMap[tahun].margin += margin;
+        });
+        
+        // 3) Gabungkan: manual prioritas (untuk tahun yang ada di rekap_margin_manual)
+        const tahunMap = { ...autoMap };
+        manualRows.forEach(m => {
+          const th = parseInt(m.tahun);
+          if (!th) return;
+          tahunMap[th] = {
+            tahun: th,
+            berat: parseFloat(m.berat) || 0,
+            total_beli: parseFloat(m.total_beli) || 0,
+            total_jual: parseFloat(m.total_jual) || 0,
+            margin: parseFloat(m.margin) || 0,
+            sumber: 'manual'
+          };
+        });
+        
+        const rows = Object.values(tahunMap).sort((a, b) => a.tahun - b.tahun);
+        
+        const tbody = document.getElementById('tbodyRekapMargin');
+        let totalBerat = 0, totalBeli = 0, totalJual = 0, totalMargin = 0;
+        
+        if (rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong. Isi data manual 2024/2025 atau lakukan transaksi.</td></tr>`;
+        } else {
+          tbody.innerHTML = rows.map((m, i) => {
+            totalBerat += m.berat;
+            totalBeli += m.total_beli;
+            totalJual += m.total_jual;
+            totalMargin += m.margin;
+            const badge = m.sumber === 'manual' ? ' <span class="text-[10px] text-amber-600">(manual)</span>' : '';
+            return `
+              <tr class="hover:bg-slate-50">
+                <td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td>
+                <td class="p-3.5 border border-slate-200 font-bold">${m.tahun}${badge}</td>
+                <td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td>
+                <td class="p-3.5 border border-slate-200 text-right">Rp ${m.total_beli.toLocaleString('id-ID')}</td>
+                <td class="p-3.5 border border-slate-200 text-right">Rp ${m.total_jual.toLocaleString('id-ID')}</td>
+                <td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.margin.toLocaleString('id-ID')}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+        
+        document.getElementById('totBeratMargin').innerText = totalBerat.toFixed(1) + " Kg";
+        document.getElementById('totTabunganMargin').innerText = "Rp " + totalBeli.toLocaleString('id-ID');
+        document.getElementById('totPenjualanMargin').innerText = "Rp " + totalJual.toLocaleString('id-ID');
+        document.getElementById('totProfitMargin').innerText = "Rp " + totalMargin.toLocaleString('id-ID');
+        
+        Swal.close();
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+      }
+    }
+
+    async function loadRekapPeringkat() {
+      Swal.fire({ title: 'Memuat Peringkat...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
+      try {
+        // Murid
+        let { data: murid } = await supabaseClient.from('v_peringkat_murid').select('*').limit(20);
+        if (!murid) {
+          const { data } = await supabaseClient.from('nasabah')
+            .select('id, nama, kelas, total_berat, total_saldo, rank')
+            .eq('is_active', true)
+            .or('kategori.eq.Murid,kategori.is.null,kategori.eq.')
+            .order('total_saldo', { ascending: false })
+            .limit(20);
+          murid = (data || []).map((m, i) => ({
+            peringkat: m.rank || (i + 1),
+            id: m.id,
+            nama: m.nama,
+            kelas: m.kelas,
+            berat: m.total_berat,
+            saldo: m.total_saldo
+          }));
+        }
+        
+        // Umum / Guru
+        let { data: umum } = await supabaseClient.from('v_peringkat_umum').select('*').limit(20);
+        if (!umum) {
+          const { data } = await supabaseClient.from('nasabah')
+            .select('id, nama, kelas, total_berat, total_saldo, rank, kategori')
+            .eq('is_active', true)
+            .in('kategori', ['Umum', 'Guru'])
+            .order('total_saldo', { ascending: false })
+            .limit(20);
+          umum = (data || []).map((u, i) => ({
+            peringkat: u.rank || (i + 1),
+            id: u.id,
+            nama: u.nama,
+            kategori: u.kategori || u.kelas,
+            berat: u.total_berat,
+            saldo: u.total_saldo
+          }));
+        }
+        
+        document.getElementById('tbodyRankMurid').innerHTML = (murid || []).map(m => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2 border text-center font-bold">#${m.peringkat}</td>
+            <td class="p-2 border font-mono">${m.id}</td>
+            <td class="p-2 border font-bold">${m.nama}</td>
+            <td class="p-2 border text-center">${m.kelas}</td>
+            <td class="p-2 border text-right">${parseFloat(m.berat || 0).toFixed(1)} Kg</td>
+            <td class="p-2 border text-right font-bold text-emerald-700">Rp ${parseFloat(m.saldo || 0).toLocaleString('id-ID')}</td>
           </tr>
         `).join('');
-
-        document.getElementById('totBeratRekap').innerText = res.totalBerat.toFixed(1) + " Kg"; 
-        document.getElementById('totTabunganRekap').innerText = "Rp " + res.totalTabungan.toLocaleString('id-ID'); 
-        document.getElementById('totPenjualanRekap').innerText = "Rp " + res.totalPenjualan.toLocaleString('id-ID'); 
-        document.getElementById('totMarginRekap').innerText = "Rp " + res.totalMargin.toLocaleString('id-ID');
-      });
-    }
-
-    function loadRekapKelas() {
-      Swal.fire({ title: 'Memuat Rekap Kelas...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      apiGET('getAdminRekapKelasData').then(res => {
-        Swal.close(); const tbody = document.getElementById('tbodyRekapKelas');
-        if (!res || res.length === 0) return tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`;
-        tbody.innerHTML = res.map((r, i) => `<tr class="hover:bg-slate-50"><td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td><td class="p-3.5 border border-slate-200 font-bold text-emerald-800">${r.kelas}</td><td class="p-3.5 border border-slate-200 text-right">${r.berat.toFixed(1)} Kg</td><td class="p-3.5 border border-slate-200 text-right font-extrabold text-emerald-600">Rp ${r.saldo.toLocaleString('id-ID')}</td><td class="p-3.5 border border-slate-200 text-center font-bold">#${r.peringkat}</td></tr>`).join('');
-      });
-    }
-
-    // PENYEMPURNAAN PENJUMLAHAN TOTAL REKAP MARGIN
-    function loadRekapMargin() {
-      Swal.fire({ title: 'Memuat Margin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      apiGET('getAdminRekapMarginData').then(res => {
-        Swal.close(); 
-        const tbody = document.getElementById('tbodyRekapMargin');
         
-        // Reset jika data kosong
-        if (!res || res.length === 0) { 
-          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Data kosong.</td></tr>`; 
-          document.getElementById('totBeratMargin').innerText = "0,0 Kg";
-          document.getElementById('totTabunganMargin').innerText = "Rp 0";
-          document.getElementById('totPenjualanMargin').innerText = "Rp 0";
-          document.getElementById('totProfitMargin').innerText = "Rp 0";
-          return; 
-        }
-
-        let totalBerat = 0, totalTabungan = 0, totalPenjualan = 0, totalProfit = 0;
-
-        tbody.innerHTML = res.map((m, i) => {
-          // Menjumlahkan data sambil melakukan map/looping
-          totalBerat += m.berat;
-          totalTabungan += m.tabungan;
-          totalPenjualan += m.penjualan;
-          totalProfit += m.profit;
-
-          return `<tr class="hover:bg-slate-50">
-            <td class="p-3.5 border border-slate-200 text-center font-bold">${i + 1}</td>
-            <td class="p-3.5 border border-slate-200 font-bold">${m.tahun}</td>
-            <td class="p-3.5 border border-slate-200 text-right">${m.berat.toFixed(1)} Kg</td>
-            <td class="p-3.5 border border-slate-200 text-right">Rp ${m.tabungan.toLocaleString('id-ID')}</td>
-            <td class="p-3.5 border border-slate-200 text-right">Rp ${m.penjualan.toLocaleString('id-ID')}</td>
-            <td class="p-3.5 border border-slate-200 text-right font-bold text-emerald-600">Rp ${m.profit.toLocaleString('id-ID')}</td>
-          </tr>`;
-        }).join('');
-
-        // Menuliskan hasil penjumlahan ke baris Footer
-        document.getElementById('totBeratMargin').innerText = totalBerat.toFixed(1) + " Kg";
-        document.getElementById('totTabunganMargin').innerText = "Rp " + totalTabungan.toLocaleString('id-ID');
-        document.getElementById('totPenjualanMargin').innerText = "Rp " + totalPenjualan.toLocaleString('id-ID');
-        document.getElementById('totProfitMargin').innerText = "Rp " + totalProfit.toLocaleString('id-ID');
-      });
-    }
-
-    function loadRekapPeringkat() {
-      Swal.fire({ title: 'Memuat Peringkat...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      apiGET('getAdminPeringkatData').then(res => {
+        document.getElementById('tbodyRankUmum').innerHTML = (umum || []).map(u => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2 border text-center font-bold">#${u.peringkat}</td>
+            <td class="p-2 border font-mono">${u.id}</td>
+            <td class="p-2 border font-bold">${u.nama}</td>
+            <td class="p-2 border text-center">${u.kategori}</td>
+            <td class="p-2 border text-right">${parseFloat(u.berat || 0).toFixed(1)} Kg</td>
+            <td class="p-2 border text-right font-bold text-emerald-700">Rp ${parseFloat(u.saldo || 0).toLocaleString('id-ID')}</td>
+          </tr>
+        `).join('');
+        
         Swal.close();
-        document.getElementById('tbodyRankMurid').innerHTML = (res.murid || []).map(m => `<tr class="hover:bg-slate-50"><td class="p-2 border text-center font-bold">#${m.peringkat}</td><td class="p-2 border font-mono">${m.id}</td><td class="p-2 border font-bold">${m.nama}</td><td class="p-2 border text-center">${m.kelas}</td><td class="p-2 border text-right">${m.berat.toFixed(1)} Kg</td><td class="p-2 border text-right font-bold text-emerald-700">Rp ${m.saldo.toLocaleString('id-ID')}</td></tr>`).join('');
-        document.getElementById('tbodyRankUmum').innerHTML = (res.umum || []).map(u => `<tr class="hover:bg-slate-50"><td class="p-2 border text-center font-bold">#${u.peringkat}</td><td class="p-2 border font-mono">${u.id}</td><td class="p-2 border font-bold">${u.nama}</td><td class="p-2 border text-center">${u.kategori}</td><td class="p-2 border text-right">${u.berat.toFixed(1)} Kg</td><td class="p-2 border text-right font-bold text-emerald-700">Rp ${u.saldo.toLocaleString('id-ID')}</td></tr>`).join('');
-      });
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+      }
     }
 
-    function loadDaftarNasabahDropdown() {
-      apiGET('getDaftarSemuaNasabah').then(list => {
-        daftarSemuaNasabah = list; const opt = '<option value="">-- Pilih Nasabah --</option>' + list.map(n => `<option value="${n.id}">${n.id} - ${n.nama} (${n.kelas})</option>`).join('');
-        document.getElementById('mutasiNasabah').innerHTML = opt; document.getElementById('hapusNasabahSelect').innerHTML = opt;
-      });
+    async function loadDaftarNasabahDropdown() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('nasabah')
+          .select('id, nama, kelas, total_berat, total_saldo')
+          .eq('is_active', true)
+          .order('nama');
+        
+        if (error) throw error;
+        
+        daftarSemuaNasabah = data || [];
+        const opt = '<option value="">-- Pilih Nasabah --</option>' + 
+          daftarSemuaNasabah.map(n => `<option value="${n.id}">${n.id} - ${n.nama} (${n.kelas})</option>`).join('');
+        
+        document.getElementById('mutasiNasabah').innerHTML = opt;
+        document.getElementById('hapusNasabahSelect').innerHTML = opt;
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     function autoFillMutasi() {
-      const id = document.getElementById('mutasiNasabah').value, nasabah = daftarSemuaNasabah.find(n => n.id === id);
-      if (nasabah) { document.getElementById('mutasiKelas').value = nasabah.kelas; document.getElementById('mutasiBerat').value = nasabah.berat + " Kg (Saldo: Rp " + nasabah.saldo.toLocaleString('id-ID') + ")"; } 
-      else { document.getElementById('mutasiKelas').value = ""; document.getElementById('mutasiBerat').value = ""; }
+      const id = document.getElementById('mutasiNasabah').value;
+      const nasabah = daftarSemuaNasabah.find(n => n.id === id);
+      if (nasabah) {
+        document.getElementById('mutasiKelas').value = nasabah.kelas;
+        document.getElementById('mutasiBerat').value = 
+          (parseFloat(nasabah.total_berat) || 0) + " Kg (Saldo: Rp " + (parseFloat(nasabah.total_saldo) || 0).toLocaleString('id-ID') + ")";
+      } else {
+        document.getElementById('mutasiKelas').value = "";
+        document.getElementById('mutasiBerat').value = "";
+      }
     }
 
-    function handleMutasi(e) {
+    async function handleMutasi(e) {
       e.preventDefault();
-      const payload = { tanggal: document.getElementById('mutasiTanggal').value, idNasabah: document.getElementById('mutasiNasabah').value, jumlahTarik: parseFloat(document.getElementById('mutasiJumlah').value) };
-      if (!payload.idNasabah || !payload.jumlahTarik) return Swal.fire('Peringatan', 'Lengkapi form penarikan mutasi!', 'warning');
+      
+      const tanggal = document.getElementById('mutasiTanggal').value;
+      const idNasabah = document.getElementById('mutasiNasabah').value;
+      const jumlahTarik = parseFloat(document.getElementById('mutasiJumlah').value);
+      
+      if (!idNasabah || !jumlahTarik) {
+        return Swal.fire('Peringatan', 'Lengkapi form penarikan mutasi!', 'warning');
+      }
+      
       Swal.fire({ title: 'Memproses Mutasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       
-      apiPOST('prosesMutasiRekening', { data: payload }).then(res => {
+      try {
+        // Ambil data nasabah terkini
+        const { data: nasabah, error: errN } = await supabaseClient
+          .from('nasabah')
+          .select('*')
+          .eq('id', idNasabah)
+          .single();
+        
+        if (errN || !nasabah) throw new Error('Nasabah tidak ditemukan');
+        
+        const saldoSekarang = parseFloat(nasabah.total_saldo) || 0;
+        if (jumlahTarik > saldoSekarang) {
+          throw new Error('Jumlah penarikan melebihi saldo tabungan saat ini!');
+        }
+        
+        // Insert mutasi
+        const { error: errM } = await supabaseClient
+          .from('mutasi')
+          .insert({
+            tanggal: tanggal,
+            id_nasabah: idNasabah,
+            nama_nasabah: nasabah.nama,
+            kelas: nasabah.kelas,
+            total_berat: nasabah.total_berat,
+            jumlah_tarik: jumlahTarik
+          });
+        
+        if (errM) throw errM;
+        
+        // Update saldo
+        const { error: errU } = await supabaseClient
+          .from('nasabah')
+          .update({ 
+            total_saldo: saldoSekarang - jumlahTarik,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', idNasabah);
+        
+        if (errU) throw errU;
+        
         Swal.close();
-        if (res.status) { Swal.fire('Berhasil!', res.pesan, 'success'); e.target.reset(); document.getElementById('mutasiTanggal').valueAsDate = new Date(); document.getElementById('mutasiKelas').value = ""; document.getElementById('mutasiBerat').value = ""; loadDaftarNasabahDropdown(); } 
-        else Swal.fire('Gagal', res.pesan, 'error');
-      });
+        Swal.fire('Berhasil!', 'Mutasi berhasil dicatat dan saldo nasabah telah diperbarui!', 'success');
+        
+        e.target.reset();
+        document.getElementById('mutasiTanggal').valueAsDate = new Date();
+        document.getElementById('mutasiKelas').value = "";
+        document.getElementById('mutasiBerat').value = "";
+        loadDaftarNasabahDropdown();
+        
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Gagal', err.message, 'error');
+      }
     }
 
-    function konfirmasiHapusNasabah() {
-      const idNasabah = document.getElementById('hapusNasabahSelect').value, selectEl = document.getElementById('hapusNasabahSelect'), namaNasabah = selectEl.options[selectEl.selectedIndex].text;
-      if (!idNasabah) return Swal.fire('Peringatan', 'Pilih nasabah yang ingin dihapus terlebih dahulu!', 'warning');
+    async function konfirmasiHapusNasabah() {
+      const idNasabah = document.getElementById('hapusNasabahSelect').value;
+      const selectEl = document.getElementById('hapusNasabahSelect');
+      const namaNasabah = selectEl.options[selectEl.selectedIndex].text;
+      
+      if (!idNasabah) {
+        return Swal.fire('Peringatan', 'Pilih nasabah yang ingin dihapus terlebih dahulu!', 'warning');
+      }
 
-      Swal.fire({ title: 'Konfirmasi Hapus', text: `Yakin hapus "${namaNasabah}" permanen?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!', cancelButtonText: 'Batal' })
-      .then(result => {
-        if (result.isConfirmed) {
-          Swal.fire({ title: 'Menghapus Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-          apiPOST('hapusDataNasabahDanTransaksi', { id: idNasabah }).then(res => {
-            Swal.close();
-            if (res.status) { Swal.fire('Terhapus!', res.pesan, 'success'); loadDaftarNasabahDropdown(); } 
-            else Swal.fire('Gagal', res.pesan, 'error');
-          });
-        }
+      const result = await Swal.fire({
+        title: 'Konfirmasi Hapus',
+        text: `Yakin hapus "${namaNasabah}"? (Soft delete)`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
       });
+      
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        try {
+          // Soft delete
+          const { error } = await supabaseClient
+            .from('nasabah')
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('id', idNasabah);
+          
+          if (error) throw error;
+          
+          // Opsional: hapus juga transaksi (uncomment jika ingin hard delete history)
+          // await supabaseClient.from('transaksi').delete().eq('id_nasabah', idNasabah);
+          
+          Swal.close();
+          Swal.fire('Terhapus!', 'Data nasabah berhasil dinonaktifkan.', 'success');
+          loadDaftarNasabahDropdown();
+        } catch (err) {
+          Swal.close();
+          Swal.fire('Gagal', err.message, 'error');
+        }
+      }
     }
   </script>
 </body>
