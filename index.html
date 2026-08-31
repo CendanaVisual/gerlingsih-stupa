@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GERLINGSIH STUPA - Sistem Pengelolaan Tabungan Sampah</title>
+  <title>GERLINGSIH STUPA - Bank Sampah</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -13,7 +14,7 @@
       --emerald-dark: #022C22;
     }
     body { font-family: 'Plus Jakarta Sans', sans-serif; min-height: 80vh; padding-bottom: 80px; transition: background-color 0.5s ease, background-image 0.5s ease; }
-    .bg-tabunganku { background-image: url('https://lh3.googleusercontent.com/d/1sYVToGEQJXuxnYiyb3I4qHUtDlBL1eco'); background-color: #022C22; background-size: contain; background-repeat: no-repeat; background-position: center; background-attachment: fixed; color: #FFFFFF; }
+    .bg-tabunganku { background-image: url('https://lh3.googleusercontent.com/d/1bHtpf4t73Y647zkYV1W3B5ZLQ9dnv0pI'); background-color: #022C22; background-size: contain; background-repeat: no-repeat; background-position: center; background-attachment: fixed; color: #FFFFFF; }
     .bg-guru { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: #1a202c; }
     .glass-card { background: rgba(6, 78, 59, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(212, 175, 55, 0.4); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
     .guru-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(212, 175, 55, 0.5); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); border-top: 5px solid #D4AF37; }
@@ -32,23 +33,14 @@
 </head>
 <body class="bg-tabunganku">
 
-  <!-- KONFIGURASI API -->
+  <!-- KONFIGURASI SUPABASE -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz-zJD4xJeuvGNxzMz5FdDvMyb09yRyGAHN6SPvFvnoo3TMXn6i1d_u9AJPc_9Rm7Gt/exec"; // <--- GANTI DENGAN URL DEPLOY GAS ANDA
+    const SUPABASE_URL = "https://fltppndfmfuckssbvzpk.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdHBwbmRmbWZ1Y2tzc2J2enBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MDM0NTIsImV4cCI6MjEwMzI3OTQ1Mn0.u4kKTlO2dXVxdRlcmZ27klFHAUSyXAIowtdHA49GPR8";
     
-    async function apiGET(action, params = {}) {
-      let url = `${API_URL}?action=${action}`;
-      for (let k in params) url += `&${k}=${encodeURIComponent(params[k])}`;
-      let res = await fetch(url); return await res.json();
-    }
-    async function apiPOST(action, payload) {
-      let res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: action, ...payload })
-      });
-      return await res.json();
-    }
+    // Inisialisasi client dengan cara yang kompatibel CDN
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   </script>
 
   <!-- NAVIGASI TAB UTAMA -->
@@ -58,7 +50,6 @@
         <button id="btn-nasabah" onclick="switchTab('nasabah')" class="px-8 py-3 rounded-full font-bold text-sm tracking-wider uppercase transition-all gold-btn shadow-lg">TABUNGANKU</button>
         <button id="btn-guru" onclick="switchTab('guru')" class="px-8 py-3 rounded-full font-bold text-sm tracking-wider uppercase transition-all text-amber-100 hover:text-white">Dashboard Transaksi</button>
       </div>
-      <!-- Tombol Admin dengan tautan ke admin.html statis Vercel -->
       <a href="admin.html" class="px-6 py-3 rounded-full gold-btn font-bold text-xs uppercase tracking-wider shadow-lg">
         ⚙️ Panel Admin
       </a>
@@ -105,7 +96,7 @@
       </div>
     </div>
 
-    <!-- HALAMAN B: DASHBOARD GURU -->
+    <!-- HALAMAN B: DASHBOARD TRANSAKSI -->
     <div id="tab-guru" class="hidden space-y-8">
       <div class="guru-card p-8 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-4">
         <div><h2 class="text-2xl font-black uppercase text-gray-800">Dashboard Transaksi</h2><p class="text-xs text-gray-500 font-medium mt-1">Input setoran dan kelola data bank sampah</p></div>
@@ -119,7 +110,7 @@
             <div><label class="block text-xs uppercase font-bold text-gray-600 mb-2">Pilih Nama Nasabah</label><select id="selNasabah" name="idNasabah" required disabled class="w-full p-4 guru-input rounded-xl outline-none font-semibold text-sm disabled:opacity-50 disabled:bg-gray-100"><option value="">-- Pilih Kelas Terlebih Dahulu --</option></select></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label class="block text-xs uppercase font-bold text-gray-600 mb-2">Pilih Jenis Sampah</label><select id="selJenisSampah" name="jenisSampah" onchange="autofillHarga()" required class="w-full p-4 guru-input rounded-xl outline-none font-semibold text-sm"><option value="">-- Pilih Jenis Sampah --</option></select></div>
+            <div><label class="block text-xs uppercase font-bold text-gray-600 mb-2">Jenis Sampah</label><select id="selJenisSampah" name="jenisSampah" onchange="autofillHarga()" required class="w-full p-4 guru-input rounded-xl outline-none font-semibold text-sm"><option value="">-- Pilih Jenis Sampah --</option></select></div>
             <div><label class="block text-xs uppercase font-bold text-gray-600 mb-2">Berat Sampah (Kg)</label><input type="number" id="inputBerat" name="berat" step="0.1" min="0.1" required placeholder="0.0" oninput="hitungTotal()" class="w-full p-4 guru-input rounded-xl outline-none font-bold text-lg text-emerald-700"></div>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-4 p-5 rounded-2xl bg-gray-50 border border-gray-200">
@@ -155,7 +146,9 @@
 
     function switchTab(tab) {
       if (tab === 'guru' && !isLogged) {
-        document.getElementById('modalLogin').classList.remove('hidden'); document.getElementById('inputPIN').focus(); return;
+        document.getElementById('modalLogin').classList.remove('hidden'); 
+        document.getElementById('inputPIN').focus(); 
+        return;
       }
       const body = document.body, btnN = document.getElementById('btn-nasabah'), btnG = document.getElementById('btn-guru');
       const tabN = document.getElementById('tab-nasabah'), tabG = document.getElementById('tab-guru');
@@ -174,76 +167,209 @@
         footerText.className = "bg-white px-6 py-3 rounded-full text-xs text-gray-600 font-medium pointer-events-auto border border-gray-200 shadow-xl";
         btnG.className = "px-8 py-3 rounded-full font-bold text-sm tracking-wider uppercase transition-all gold-btn shadow-lg";
         btnN.className = "px-8 py-3 rounded-full font-bold text-sm tracking-wider uppercase transition-all text-gray-500 hover:text-gray-900 bg-transparent";
-        tabG.classList.remove('hidden'); tabN.classList.add('hidden'); initDashboardGuru();
+        tabG.classList.remove('hidden'); tabN.classList.add('hidden'); 
+        initDashboardGuru();
       }
     }
 
-    function verifikasiLogin() {
+    async function verifikasiLogin() {
       const pin = document.getElementById('inputPIN').value;
       if (!pin) return Swal.fire('Peringatan', 'Masukkan PIN akses admin!', 'warning');
+      
       Swal.fire({ title: 'Memverifikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       
-      apiPOST('checkLogin', { pass: pin }).then(res => {
+      try {
+        const { data, error } = await supabaseClient
+          .from('admin_config')
+          .select('value')
+          .eq('key', 'login_pin')
+          .single();
+        
         Swal.close();
-        if (res) {
-          isLogged = true; document.getElementById('modalLogin').classList.add('hidden'); document.getElementById('inputPIN').value = "";
-          switchTab('guru'); Swal.fire({ icon: 'success', title: 'Berhasil Masuk', text: 'Selamat datang di Dashboard Guru!', timer: 1500, showConfirmButton: false });
-        } else Swal.fire('Gagal', 'PIN Keamanan tidak sesuai!', 'error');
-      });
+        
+        if (error) throw error;
+        
+        if (data && data.value === pin.trim()) {
+          isLogged = true; 
+          document.getElementById('modalLogin').classList.add('hidden'); 
+          document.getElementById('inputPIN').value = "";
+          switchTab('guru'); 
+          Swal.fire({ icon: 'success', title: 'Berhasil Masuk', text: 'Selamat datang di Dashboard Transaksi!', timer: 1500, showConfirmButton: false });
+        } else {
+          Swal.fire('Gagal', 'PIN Keamanan tidak sesuai!', 'error');
+        }
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', 'Gagal memverifikasi PIN: ' + err.message, 'error');
+      }
     }
-    function batalLogin() { document.getElementById('modalLogin').classList.add('hidden'); document.getElementById('inputPIN').value = ""; }
 
-    function cariNasabah() {
+    function batalLogin() { 
+      document.getElementById('modalLogin').classList.add('hidden'); 
+      document.getElementById('inputPIN').value = ""; 
+    }
+
+    async function cariNasabah() {
       const nama = document.getElementById('inputNamaCari').value.trim();
       if (!nama) return Swal.fire('Peringatan', 'Silakan ketik nama nasabah!', 'warning');
+      
       Swal.fire({ title: 'Mencari Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      apiGET('getReviewNasabah', { nama: nama }).then(res => {
-        Swal.close();
-        if (!res) { document.getElementById('boxHasilNasabah').classList.add('hidden'); return Swal.fire('Tidak Ditemukan', 'Nama nasabah tidak ditemukan di database.', 'error'); }
-        currentNasabahData = res; 
-        document.getElementById('resNama').innerText = res.nama; document.getElementById('resKelas').innerText = "Kelas " + res.kelas;
-        document.getElementById('resRank').innerText = "#" + res.rank; document.getElementById('resSaldo').innerText = "Rp " + res.saldo.toLocaleString('id-ID');
-        document.getElementById('resBerat').innerText = res.berat + " Kg"; document.getElementById('resTotalTransaksi').innerText = res.history.length + " Transaksi";
+      try {
+        // Cari nasabah
+        const { data: nasabahList, error: errN } = await supabaseClient
+          .from('nasabah')
+          .select('*')
+          .ilike('nama', `%${nama}%`)
+          .eq('is_active', true)
+          .limit(1);
+        
+        if (errN) throw errN;
+        
+        if (!nasabahList || nasabahList.length === 0) {
+          Swal.close();
+          document.getElementById('boxHasilNasabah').classList.add('hidden');
+          return Swal.fire('Tidak Ditemukan', 'Nama nasabah tidak ditemukan di database.', 'error');
+        }
+        
+        const profil = nasabahList[0];
+        
+        // Ambil riwayat transaksi
+        const { data: history, error: errH } = await supabaseClient
+          .from('transaksi')
+          .select('*')
+          .eq('id_nasabah', profil.id)
+          .order('timestamp', { ascending: true });
+        
+        if (errH) throw errH;
+        
+        // Hitung running saldo
+        let runningSaldo = 0;
+        const riwayat = (history || []).map(r => {
+          const danaMasuk = parseFloat(r.total_beli) || 0;
+          runningSaldo += danaMasuk;
+          return {
+            tgl: r.timestamp ? new Date(r.timestamp).toLocaleString('id-ID', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-',
+            sampah: r.jenis_sampah,
+            berat: parseFloat(r.berat) || 0,
+            danaKeluar: 0,
+            danaMasuk: danaMasuk,
+            saldo: runningSaldo
+          };
+        });
+        
+        const res = {
+          id: profil.id,
+          nama: profil.nama,
+          kelas: profil.kelas,
+          berat: parseFloat(profil.total_berat) || 0,
+          saldo: parseFloat(profil.total_saldo) || 0,
+          rank: profil.rank || '-',
+          history: riwayat
+        };
+        
+        currentNasabahData = res;
+        
+        document.getElementById('resNama').innerText = res.nama;
+        document.getElementById('resKelas').innerText = "Kelas " + res.kelas;
+        document.getElementById('resRank').innerText = "#" + res.rank;
+        document.getElementById('resSaldo').innerText = "Rp " + res.saldo.toLocaleString('id-ID');
+        document.getElementById('resBerat').innerText = res.berat + " Kg";
+        document.getElementById('resTotalTransaksi').innerText = res.history.length + " Transaksi";
 
         const historyList = document.getElementById('resHistoryList');
         const revHistory = [...res.history].reverse();
-        if (revHistory.length === 0) historyList.innerHTML = `<p class="text-center text-gray-300 py-8 text-sm italic">Belum ada riwayat setoran.</p>`;
-        else historyList.innerHTML = revHistory.map(item => `
-          <div class="p-4 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between">
-            <div><p class="font-bold text-sm text-amber-300">${item.sampah}</p><p class="text-[11px] text-gray-300">${item.tgl} • Berat: ${item.berat} Kg</p></div>
-            <div class="text-right"><p class="font-extrabold text-emerald-400 text-sm">+ Rp ${item.danaMasuk.toLocaleString('id-ID')}</p><p class="text-[10px] text-gray-400">Saldo: Rp ${item.saldo.toLocaleString('id-ID')}</p></div>
-          </div>
-        `).join('');
-        document.getElementById('boxHasilNasabah').classList.remove('hidden'); document.getElementById('boxHasilNasabah').scrollIntoView({ behavior: 'smooth' });
-      });
+        if (revHistory.length === 0) {
+          historyList.innerHTML = `<p class="text-center text-gray-300 py-8 text-sm italic">Belum ada riwayat setoran.</p>`;
+        } else {
+          historyList.innerHTML = revHistory.map(item => `
+            <div class="p-4 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between">
+              <div><p class="font-bold text-sm text-amber-300">${item.sampah}</p><p class="text-[11px] text-gray-300">${item.tgl} • Berat: ${item.berat} Kg</p></div>
+              <div class="text-right"><p class="font-extrabold text-emerald-400 text-sm">+ Rp ${item.danaMasuk.toLocaleString('id-ID')}</p><p class="text-[10px] text-gray-400">Saldo: Rp ${item.saldo.toLocaleString('id-ID')}</p></div>
+            </div>
+          `).join('');
+        }
+        
+        Swal.close();
+        document.getElementById('boxHasilNasabah').classList.remove('hidden');
+        document.getElementById('boxHasilNasabah').scrollIntoView({ behavior: 'smooth' });
+        
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Error', 'Gagal mencari data: ' + err.message, 'error');
+      }
     }
 
-    function initDashboardGuru() {
-      apiGET('getDaftarKelas').then(kelas => {
-        document.getElementById('selKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + kelas.map(k => `<option value="${k}">${k}</option>`).join('');
-      });
-      apiGET('getMasterSampah').then(data => {
-        dataMasterSampah = data;
-        document.getElementById('selJenisSampah').innerHTML = '<option value="">-- Pilih Jenis Sampah --</option>' + data.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('');
-      });
+    async function initDashboardGuru() {
+      try {
+        // Load daftar kelas
+        const { data: nasabahData } = await supabaseClient
+          .from('nasabah')
+          .select('kelas')
+          .eq('is_active', true);
+        
+        const kelasUnik = [...new Set((nasabahData || []).map(r => r.kelas).filter(Boolean))].sort();
+        document.getElementById('selKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
+          kelasUnik.map(k => `<option value="${k}">${k}</option>`).join('');
+        
+        // Load master sampah
+        const { data: sampahData } = await supabaseClient
+          .from('master_sampah')
+          .select('*')
+          .order('nama_sampah');
+        
+        dataMasterSampah = sampahData || [];
+        document.getElementById('selJenisSampah').innerHTML = '<option value="">-- Pilih Jenis Sampah --</option>' + 
+          dataMasterSampah.map(s => `<option value="${s.nama_sampah}">${s.nama_sampah}</option>`).join('');
+          
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Gagal memuat data master: ' + err.message, 'error');
+      }
     }
 
-    function loadNasabahByKelas() {
+    async function loadNasabahByKelas() {
       const kelas = document.getElementById('selKelas').value;
       const selNasabah = document.getElementById('selNasabah');
-      if (!kelas) { selNasabah.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>'; selNasabah.disabled = true; return; }
-      selNasabah.innerHTML = '<option value="">Memuat data...</option>'; selNasabah.disabled = true;
-      apiGET('getNasabahByKelas', { kelas: kelas }).then(nasabah => {
-        selNasabah.innerHTML = '<option value="">-- Pilih Nama Nasabah --</option>' + nasabah.map(n => `<option value="${n.id}">${n.nama}</option>`).join(''); selNasabah.disabled = false;
-      });
+      
+      if (!kelas) { 
+        selNasabah.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>'; 
+        selNasabah.disabled = true; 
+        return; 
+      }
+      
+      selNasabah.innerHTML = '<option value="">Memuat data...</option>'; 
+      selNasabah.disabled = true;
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('nasabah')
+          .select('id, nama')
+          .eq('kelas', kelas)
+          .eq('is_active', true)
+          .order('nama');
+        
+        if (error) throw error;
+        
+        selNasabah.innerHTML = '<option value="">-- Pilih Nama Nasabah --</option>' + 
+          (data || []).map(n => `<option value="${n.id}">${n.nama}</option>`).join('');
+        selNasabah.disabled = false;
+      } catch (err) {
+        selNasabah.innerHTML = '<option value="">Gagal memuat</option>';
+        Swal.fire('Error', err.message, 'error');
+      }
     }
 
     function autofillHarga() {
       const namaSampah = document.getElementById('selJenisSampah').value;
-      const target = dataMasterSampah.find(s => s.nama === namaSampah);
-      if (target) { document.getElementById('hargaBeli').value = target.hargaBeli; document.getElementById('hargaJual').value = target.hargaJual; } 
-      else { document.getElementById('hargaBeli').value = ""; document.getElementById('hargaJual').value = ""; }
+      const target = dataMasterSampah.find(s => s.nama_sampah === namaSampah);
+      if (target) { 
+        document.getElementById('hargaBeli').value = target.harga_beli; 
+        document.getElementById('hargaJual').value = target.harga_jual; 
+      } else { 
+        document.getElementById('hargaBeli').value = ""; 
+        document.getElementById('hargaJual').value = ""; 
+      }
       hitungTotal();
     }
 
@@ -253,42 +379,138 @@
       document.getElementById('txtTotalBeli').innerText = "Rp " + (berat * hBeli).toLocaleString('id-ID');
     }
 
-    function handleSimpanTransaksi(e) {
+    async function handleSimpanTransaksi(e) {
       e.preventDefault();
-      const payload = {
-        idNasabah: document.getElementById('selNasabah').value, kelas: document.getElementById('selKelas').value,
-        jenisSampah: document.getElementById('selJenisSampah').value, berat: document.getElementById('inputBerat').value,
-        hargaBeli: document.getElementById('hargaBeli').value, hargaJual: document.getElementById('hargaJual').value
-      };
-      if (!payload.idNasabah || !payload.jenisSampah || !payload.berat) return Swal.fire('Peringatan', 'Lengkapi data!', 'warning');
+      
+      const idNasabah = document.getElementById('selNasabah').value;
+      const kelas = document.getElementById('selKelas').value;
+      const jenisSampah = document.getElementById('selJenisSampah').value;
+      const berat = parseFloat(document.getElementById('inputBerat').value);
+      const hargaBeli = parseFloat(document.getElementById('hargaBeli').value);
+      const hargaJual = parseFloat(document.getElementById('hargaJual').value);
+      
+      if (!idNasabah || !jenisSampah || !berat) {
+        return Swal.fire('Peringatan', 'Lengkapi data!', 'warning');
+      }
+
+      const totalBeli = berat * hargaBeli;
+      const totalJual = berat * hargaJual;
+      const margin = totalJual - totalBeli;
 
       Swal.fire({ title: 'Menyimpan Transaksi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      apiPOST('simpanSetoran', { data: payload }).then(res => {
+      
+      try {
+        // Ambil nama nasabah
+        const { data: nasabahData } = await supabaseClient
+          .from('nasabah')
+          .select('nama')
+          .eq('id', idNasabah)
+          .single();
+        
+        const namaNasabah = nasabahData?.nama || '';
+        
+        // Insert transaksi (trigger akan update saldo & berat)
+        const { error } = await supabaseClient
+          .from('transaksi')
+          .insert({
+            id_nasabah: idNasabah,
+            nama_nasabah: namaNasabah,
+            jenis_sampah: jenisSampah,
+            berat: berat,
+            harga_beli: hargaBeli,
+            harga_jual: hargaJual,
+            total_beli: totalBeli,
+            total_jual: totalJual,
+            margin: margin,
+            kelas: kelas
+          });
+        
+        if (error) throw error;
+        
         Swal.close();
-        if (res.status) {
-          Swal.fire('Berhasil!', res.pesan, 'success'); document.getElementById('formTransaksi').reset();
-          document.getElementById('selNasabah').innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
-          document.getElementById('selNasabah').disabled = true; document.getElementById('txtTotalBeli').innerText = "Rp 0";
-        } else Swal.fire('Gagal!', res.pesan, 'error');
-      });
+        Swal.fire('Berhasil!', 'Transaksi berhasil disimpan!', 'success');
+        
+        document.getElementById('formTransaksi').reset();
+        document.getElementById('selNasabah').innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
+        document.getElementById('selNasabah').disabled = true;
+        document.getElementById('txtTotalBeli').innerText = "Rp 0";
+        
+      } catch (err) {
+        Swal.close();
+        Swal.fire('Gagal!', err.message, 'error');
+      }
     }
 
-    // Fungsi Cetak (Aman untuk Vercel karena berjalan murni di Browser klien)
+    // Fungsi Cetak Buku Tabungan
     function cetakBukuTabungan() {
       if (!currentNasabahData) return;
-      const n = currentNasabahData, tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-      let barisTabel = n.history.map((h, i) => `<tr><td style="text-align: center;">${i + 1}</td><td>${h.tgl}</td><td>${h.sampah}</td><td style="text-align: right;">${h.berat.toFixed(1)}</td><td style="text-align: right;">${h.danaKeluar > 0 ? 'Rp '+h.danaKeluar.toLocaleString('id-ID') : '-'}</td><td style="text-align: right;">${h.danaMasuk > 0 ? 'Rp '+h.danaMasuk.toLocaleString('id-ID') : '-'}</td><td style="text-align: right; font-weight: bold;">Rp ${h.saldo.toLocaleString('id-ID')}</td></tr>`).join('');
-      if (n.history.length === 0) barisTabel = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Belum ada catatan transaksi.</td></tr>`;
+      const n = currentNasabahData;
+      const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      let barisTabel = n.history.map((h, i) => 
+        `<tr>
+          <td style="text-align: center;">${i + 1}</td>
+          <td>${h.tgl}</td>
+          <td>${h.sampah}</td>
+          <td style="text-align: right;">${h.berat.toFixed(1)}</td>
+          <td style="text-align: right;">${h.danaKeluar > 0 ? 'Rp '+h.danaKeluar.toLocaleString('id-ID') : '-'}</td>
+          <td style="text-align: right;">${h.danaMasuk > 0 ? 'Rp '+h.danaMasuk.toLocaleString('id-ID') : '-'}</td>
+          <td style="text-align: right; font-weight: bold;">Rp ${h.saldo.toLocaleString('id-ID')}</td>
+        </tr>`
+      ).join('');
+      
+      if (n.history.length === 0) {
+        barisTabel = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Belum ada catatan transaksi.</td></tr>`;
+      }
       
       const win = window.open('', '_blank');
       win.document.write(`
         <!DOCTYPE html><html><head><title>Buku Tabungan - ${n.nama}</title>
-        <style>body { font-family: 'Segoe UI', sans-serif; padding: 20px; } .header-box { text-align: center; border-bottom: 3px double #064E3B; padding-bottom: 15px; margin-bottom: 20px; } .header-box h1 { margin: 0; font-size: 20px; color: #064E3B; } .info-table { width: 100%; margin-bottom: 20px; font-size: 13px; } .info-label { width: 140px; font-weight: bold; } .data-table { width: 100%; border-collapse: collapse; font-size: 12px; } .data-table th, .data-table td { border: 1px solid #999; padding: 8px; } .data-table th { background-color: #064E3B; color: #fff; text-transform: uppercase; font-size: 11px; } .footer-sign { margin-top: 40px; float: right; text-align: center; width: 260px; font-size: 12px; page-break-inside: avoid; } @media print { body { padding: 0; } }</style></head>
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
+          .header-box { text-align: center; border-bottom: 3px double #064E3B; padding-bottom: 15px; margin-bottom: 20px; }
+          .header-box h1 { margin: 0; font-size: 20px; color: #064E3B; }
+          .info-table { width: 100%; margin-bottom: 20px; font-size: 13px; }
+          .info-label { width: 140px; font-weight: bold; }
+          .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          .data-table th, .data-table td { border: 1px solid #999; padding: 8px; }
+          .data-table th { background-color: #064E3B; color: #fff; text-transform: uppercase; font-size: 11px; }
+          .footer-sign { margin-top: 40px; float: right; text-align: center; width: 260px; font-size: 12px; page-break-inside: avoid; }
+          @media print { body { padding: 0; } }
+        </style></head>
         <body>
-          <div class="header-box"><h1>BUKU TABUNGAN BANK SAMPAH GERLINGSIH STUPA</h1><p style="margin: 4px 0 0; font-size: 12px; font-style: italic;">SD Negeri 7 Pedungan | Mewujudkan Lingkungan Bersih, Menabung Jadi Prestasi</p></div>
-          <table class="info-table"><tr><td class="info-label">ID Nasabah</td><td>: <strong>${n.id}</strong></td><td class="info-label">Peringkat</td><td>: <strong>#${n.rank}</strong></td></tr><tr><td class="info-label">Nama Nasabah</td><td>: <strong>${n.nama}</strong></td><td class="info-label">Total Saldo</td><td>: <strong style="color: #064E3B;">Rp ${n.saldo.toLocaleString('id-ID')}</strong></td></tr><tr><td class="info-label">Kelas</td><td>: <strong>${n.kelas}</strong></td><td class="info-label">Tanggal Cetak</td><td>: ${tglCetak}</td></tr></table>
-          <table class="data-table"><thead><tr><th style="width:35px;">No</th><th>Timestamp</th><th>Jenis Sampah</th><th>Berat (Kg)</th><th>Dana Keluar</th><th>Dana Masuk</th><th>Saldo (Rp.)</th></tr></thead><tbody>${barisTabel}</tbody></table>
-          <div class="footer-sign"><p style="margin:0; padding-bottom:5px;">Denpasar, ${tglCetak}<br>Pengelola Bank Sampah</p><div style="height:65px; line-height:65px; text-align:center; margin:5px 0; overflow:hidden;"><img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" style="max-height:60px; max-width:150px; vertical-align:middle; display:inline-block;" onerror="this.style.display='none'; document.getElementById('ft').style.display='inline-block';"><span id="ft" style="display:none; font-size:11px; font-style:italic; line-height:normal; vertical-align:middle;">(Tanda Tangan)</span></div><div style="border-top:1px solid #111; width:85%; margin:0 auto; padding-top:4px;"><strong style="font-size:13px; letter-spacing:0.5px;">GERLINGSIH STUPA</strong></div></div>
+          <div class="header-box">
+            <h1>BUKU TABUNGAN BANK SAMPAH GERLINGSIH STUPA</h1>
+            <p style="margin: 4px 0 0; font-size: 12px; font-style: italic;">SD Negeri 7 Pedungan | Mewujudkan Lingkungan Bersih, Menabung Jadi Prestasi</p>
+          </div>
+          <table class="info-table">
+            <tr><td class="info-label">ID Nasabah</td><td>: <strong>${n.id}</strong></td><td class="info-label">Peringkat</td><td>: <strong>#${n.rank}</strong></td></tr>
+            <tr><td class="info-label">Nama Nasabah</td><td>: <strong>${n.nama}</strong></td><td class="info-label">Total Saldo</td><td>: <strong style="color: #064E3B;">Rp ${n.saldo.toLocaleString('id-ID')}</strong></td></tr>
+            <tr><td class="info-label">Kelas</td><td>: <strong>${n.kelas}</strong></td><td class="info-label">Tanggal Cetak</td><td>: ${tglCetak}</td></tr>
+          </table>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:35px;">No</th>
+                <th>Timestamp</th>
+                <th>Jenis Sampah</th>
+                <th>Berat (Kg)</th>
+                <th>Dana Keluar</th>
+                <th>Dana Masuk</th>
+                <th>Saldo (Rp.)</th>
+              </tr>
+            </thead>
+            <tbody>${barisTabel}</tbody>
+          </table>
+          <div class="footer-sign">
+            <p style="margin:0; padding-bottom:5px;">Denpasar, ${tglCetak}<br>Pengelola Bank Sampah</p>
+            <div style="height:65px; line-height:65px; text-align:center; margin:5px 0; overflow:hidden;">
+              <img src="https://lh3.googleusercontent.com/d/1mXSDvJQ4OAm6kI2wicp3EDiOQuervTtI" style="max-height:60px; max-width:150px; vertical-align:middle; display:inline-block;" onerror="this.style.display='none';">
+            </div>
+            <div style="border-top:1px solid #111; width:85%; margin:0 auto; padding-top:4px;">
+              <strong style="font-size:13px; letter-spacing:0.5px;">GERLINGSIH STUPA</strong>
+            </div>
+          </div>
           <script>window.onload = function() { window.print(); };<\/script>
         </body></html>
       `);
