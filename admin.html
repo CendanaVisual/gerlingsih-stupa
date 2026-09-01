@@ -233,7 +233,7 @@
             </select>
           </div>
           <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">
-            ⚠️ <strong>Perhatian:</strong> Tindakan ini bersifat permanen (soft delete).
+            ⚠️ <strong>Perhatian:</strong> Nasabah akan dinonaktifkan dan <strong>seluruh riwayat transaksi</strong> dihapus permanen dari database.
           </div>
           <button onclick="konfirmasiHapusNasabah()" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all">
             HAPUS NASABAH & RIWAYAT TRANSAKSI
@@ -751,17 +751,32 @@
           throw new Error('Jumlah penarikan melebihi saldo tabungan saat ini!');
         }
         
-        // Insert mutasi
-        const { error: errM } = await supabaseClient
+        // Insert mutasi (hanya kolom yang umum ada di tabel mutasi)
+        const payloadMutasi = {
+          tanggal: tanggal,
+          id_nasabah: idNasabah,
+          jumlah_tarik: jumlahTarik
+        };
+        // Kolom opsional — hanya dikirim jika ingin dicatat (abaikan jika kolom belum ada di DB)
+        if (nasabah.nama) payloadMutasi.nama_nasabah = nasabah.nama;
+        if (nasabah.total_berat != null) payloadMutasi.total_berat = nasabah.total_berat;
+        
+        let { error: errM } = await supabaseClient
           .from('mutasi')
-          .insert({
-            tanggal: tanggal,
-            id_nasabah: idNasabah,
-            nama_nasabah: nasabah.nama,
-            kelas: nasabah.kelas,
-            total_berat: nasabah.total_berat,
-            jumlah_tarik: jumlahTarik
-          });
+          .insert(payloadMutasi);
+        
+        // Fallback: jika kolom opsional tidak ada, insert minimal saja
+        if (errM && (errM.message || '').includes('column')) {
+          const { error: errMin } = await supabaseClient
+            .from('mutasi')
+            .insert({
+              tanggal: tanggal,
+              id_nasabah: idNasabah,
+              jumlah_tarik: jumlahTarik
+            });
+          if (errMin) throw errMin;
+          errM = null;
+        }
         
         if (errM) throw errM;
         
@@ -802,11 +817,12 @@
 
       const result = await Swal.fire({
         title: 'Konfirmasi Hapus',
-        text: `Yakin hapus "${namaNasabah}"? (Soft delete)`,
+        html: `Yakin hapus <strong>"${namaNasabah}"</strong>?<br><br>
+               <span class="text-red-600 text-sm">Nasabah akan dinonaktifkan dan <strong>seluruh riwayat transaksi</strong> ikut dihapus permanen.</span>`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        confirmButtonText: 'Ya, Hapus!',
+        confirmButtonText: 'Ya, Hapus Semua!',
         cancelButtonText: 'Batal'
       });
       
@@ -814,19 +830,39 @@
         Swal.fire({ title: 'Menghapus Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
         try {
-          // Soft delete
+          // 1) Hapus SEMUA transaksi nasabah (permanen)
+          const { error: errTx } = await supabaseClient
+            .from('transaksi')
+            .delete()
+            .eq('id_nasabah', idNasabah);
+          
+          if (errTx) throw errTx;
+          
+          // 2) Hapus mutasi nasabah (jika ada)
+          try {
+            await supabaseClient
+              .from('mutasi')
+              .delete()
+              .eq('id_nasabah', idNasabah);
+          } catch (e) {
+            // Abaikan jika tabel mutasi kosong / kolom berbeda
+          }
+          
+          // 3) Nonaktifkan nasabah (soft delete)
           const { error } = await supabaseClient
             .from('nasabah')
-            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .update({ 
+              is_active: false, 
+              total_berat: 0,
+              total_saldo: 0,
+              updated_at: new Date().toISOString() 
+            })
             .eq('id', idNasabah);
           
           if (error) throw error;
           
-          // Opsional: hapus juga transaksi (uncomment jika ingin hard delete history)
-          // await supabaseClient.from('transaksi').delete().eq('id_nasabah', idNasabah);
-          
           Swal.close();
-          Swal.fire('Terhapus!', 'Data nasabah berhasil dinonaktifkan.', 'success');
+          Swal.fire('Terhapus!', 'Nasabah dinonaktifkan dan seluruh riwayat transaksi telah dihapus.', 'success');
           loadDaftarNasabahDropdown();
         } catch (err) {
           Swal.close();
